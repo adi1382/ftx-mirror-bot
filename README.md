@@ -1,0 +1,1 @@
+# ftx-mirror-bot
