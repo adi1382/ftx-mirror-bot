@@ -1,0 +1,34 @@
+{
+
+    "Settings": {
+        "RatioUpdateRate": 3600,
+        "CalibrationRate": 10
+    },
+
+    "HostAccount": {
+        "ApiKey": "",
+        "Secret": ""
+    },
+
+    "SubAccounts": {
+
+        "Account 1": {
+            "Enabled": true,
+            "BalanceProportion": true,
+            "FixedProportion": 1,
+            "CopyLeverage": true,
+            "ApiKey": "",
+            "Secret": ""
+        },
+
+        "Account 2": {
+            "Enabled": false,
+            "BalanceProportion": true,
+            "FixedProportion": 1,
+            "CopyLeverage": true,
+            "ApiKey": "",
+            "Secret": ""
+        }
+    }
+
+}
