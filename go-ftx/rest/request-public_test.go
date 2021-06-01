@@ -198,7 +198,6 @@ func TestMultiUnderlyingsRates(t *testing.T) {
 	*/
 }
 
-
 func TestSingleUnderlyingRates(t *testing.T) {
 	c := rest.New(nil)
 	res, err := c.Rates(&futures.RequestForRates{

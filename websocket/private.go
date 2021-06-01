@@ -1,0 +1,89 @@
+package websocket
+
+import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"github.com/adi1382/ftx-mirror-bot/constants"
+	"github.com/gorilla/websocket"
+	"net/url"
+	"time"
+)
+
+type wsMessage struct {
+	Op      string `json:"op"`
+	Channel string `json:"channel"`
+	Market  string `json:"market"`
+}
+
+type wsAuthorizationMessage struct {
+	Op   string                 `json:"op"`
+	Args map[string]interface{} `json:"args"`
+}
+
+func connect(host string) (*websocket.Conn, error) {
+	u := url.URL{Scheme: "wss", Host: host, Path: "/ws/"}
+	fmt.Println(u.String())
+	conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+	return conn, err
+}
+
+func ReadFromWSToChannel(c *websocket.Conn) {
+
+	for {
+		_, message, err := c.ReadMessage()
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Println("Message Received: ", string(message))
+	}
+}
+
+func (ws *WSConnection) subscribeToPrivateChannels(channels []string) {
+	for i := range channels {
+		err := ws.Conn.WriteJSON(&wsMessage{
+			Op:      "subscribe",
+			Channel: channels[i]})
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
+func (ws *WSConnection) getAuthMessage() *wsAuthorizationMessage {
+	timestamp := time.Now().UTC().UnixNano() / int64(time.Millisecond)
+
+	sig := hmac.New(sha256.New, []byte(ws.secret))
+	sig.Write([]byte(fmt.Sprintf("%dwebsocket_login", timestamp)))
+	args := map[string]interface{}{
+		"key":  ws.key,
+		"sign": hex.EncodeToString(sig.Sum(nil)),
+		"time": timestamp,
+	}
+
+	return &wsAuthorizationMessage{"login", args}
+}
+
+func (ws *WSConnection) pingPong() {
+	ticker := time.NewTicker(constants.PingPeriod)
+	defer ticker.Stop()
+
+	_ = ws.Conn.SetReadDeadline(time.Now().Add(constants.PongWait))
+	ws.Conn.SetPongHandler(func(string) error { err := ws.Conn.SetReadDeadline(time.Now().Add(constants.PongWait)); return err })
+
+	for {
+		select {
+		case <-ticker.C:
+			if err := ws.Conn.WriteMessage(websocket.PingMessage, []byte(`{"op": "ping"}`)); err != nil {
+				panic(err)
+			}
+
+		default:
+			// End this function from here, when restarting
+		}
+
+		time.Sleep(time.Millisecond)
+	}
+}

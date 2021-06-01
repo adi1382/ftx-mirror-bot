@@ -10,9 +10,9 @@ type RequestForBalances struct {
 type ResponseForBalances []Balance
 
 type Balance struct {
-	Coin  string  `json:"coin"`
-	Free  float64 `json:"free"`
-	Total float64 `json:"total"`
+	Coin     string  `json:"coin"`
+	Free     float64 `json:"free"`
+	Total    float64 `json:"total"`
 	USDValue float64 `json:"usdvalue"`
 }
 
