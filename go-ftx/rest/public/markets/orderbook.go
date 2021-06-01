@@ -7,33 +7,33 @@ import (
 	"github.com/google/go-querystring/query"
 )
 
-// query
+// RequestForOrderBook query
 // ?depth={depth}
-type RequestForOrderbook struct {
+type RequestForOrderBook struct {
 	ProductCode string `url:"-"`
 	Depth       int    `url:"depth,omitempty"`
 }
 
-type ResponseForOrderbook Orderbook
+type ResponseForOrderBook OrderBook
 
-type Orderbook struct {
+type OrderBook struct {
 	Asks [][]float64 `json:"asks"`
 	Bids [][]float64 `json:"bids"`
 }
 
-func (req *RequestForOrderbook) Path() string {
+func (req *RequestForOrderBook) Path() string {
 	return fmt.Sprintf("/markets/%s/orderbook", req.ProductCode)
 }
 
-func (req *RequestForOrderbook) Method() string {
+func (req *RequestForOrderBook) Method() string {
 	return http.MethodGet
 }
 
-func (req *RequestForOrderbook) Query() string {
+func (req *RequestForOrderBook) Query() string {
 	values, _ := query.Values(req)
 	return values.Encode()
 }
 
-func (req *RequestForOrderbook) Payload() []byte {
+func (req *RequestForOrderBook) Payload() []byte {
 	return nil
 }

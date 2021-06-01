@@ -3,14 +3,14 @@ package rest
 import (
 	"time"
 
-	"github.com/go-numb/go-ftx/auth"
-	jsoniter "github.com/json-iterator/go"
+	"github.com/adi1382/ftx-mirror-bot/go-ftx/auth"
+	jsonIter "github.com/json-iterator/go"
 	"github.com/valyala/fasthttp"
 )
 
 const ENDPOINT = "https://ftx.com/api"
 
-var json = jsoniter.ConfigCompatibleWithStandardLibrary
+var json = jsonIter.ConfigCompatibleWithStandardLibrary
 
 type Client struct {
 	Auth *auth.Config

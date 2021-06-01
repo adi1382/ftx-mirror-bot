@@ -3,10 +3,10 @@ package subaccount
 import (
 	"net/http"
 
-	jsoniter "github.com/json-iterator/go"
+	jsonIter "github.com/json-iterator/go"
 )
 
-var json = jsoniter.ConfigCompatibleWithStandardLibrary
+var json = jsonIter.ConfigCompatibleWithStandardLibrary
 
 type RequestForCreateSubAccount struct {
 	NickName string `json:"nickname"`

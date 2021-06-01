@@ -27,7 +27,7 @@ type Rate struct {
 	Time   time.Time `json:"time"`
 }
 
-// Example : https://ftx.com/api/funding_rates?future=DEFI-PERP&start_time=1597687200&end_time=1597773600
+// Path Example : https://ftx.com/api/funding_rates?future=DEFI-PERP&start_time=1597687200&end_time=1597773600
 func (req *RequestForRates) Path() string {
 	return fmt.Sprintf("/funding_rates")
 }

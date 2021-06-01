@@ -1,8 +1,8 @@
 package rest
 
 import (
-	"github.com/go-numb/go-ftx/rest/public/futures"
-	"github.com/go-numb/go-ftx/rest/public/markets"
+	"github.com/adi1382/ftx-mirror-bot/go-ftx/rest/public/futures"
+	"github.com/adi1382/ftx-mirror-bot/go-ftx/rest/public/markets"
 )
 
 func (p *Client) Markets(req *markets.RequestForMarkets) (*markets.ResponseForMarkets, error) {
@@ -24,8 +24,8 @@ func (p *Client) Markets(req *markets.RequestForMarkets) (*markets.ResponseForMa
 	return results, nil
 }
 
-func (p *Client) Orderbook(req *markets.RequestForOrderbook) (*markets.ResponseForOrderbook, error) {
-	results := new(markets.ResponseForOrderbook)
+func (p *Client) Orderbook(req *markets.RequestForOrderBook) (*markets.ResponseForOrderBook, error) {
+	results := new(markets.ResponseForOrderBook)
 	if err := p.request(req, results); err != nil {
 		return nil, err
 	}

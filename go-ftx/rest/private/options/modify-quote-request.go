@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-// Document記載はCreate quoteだが、modify request
+// RequestForModifyOpQuoteRequest Document記載はCreate quoteだが、modify request
 type RequestForModifyOpQuoteRequest struct {
 	RequestID int     `json:"-"`
 	Price     float64 `json:"price"`
@@ -14,7 +14,7 @@ type RequestForModifyOpQuoteRequest struct {
 type ResponseForModifyOpQuoteRequest Quote
 
 func (req *RequestForModifyOpQuoteRequest) Path() string {
-	return fmt.Sprintf("/options/requests/%s/quotes", req.RequestID)
+	return fmt.Sprintf("/options/requests/%d/quotes", req.RequestID)
 }
 
 func (req *RequestForModifyOpQuoteRequest) Method() string {

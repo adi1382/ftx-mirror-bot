@@ -2,14 +2,13 @@ package markets
 
 import (
 	"fmt"
+	"github.com/adi1382/ftx-mirror-bot/go-ftx/types"
+	"github.com/google/go-querystring/query"
 	"net/http"
 	"time"
-
-	"github.com/go-numb/go-ftx/types"
-	"github.com/google/go-querystring/query"
 )
 
-// query
+// RequestForTrades query
 // ?limit={limit}&start_time={start_time}&end_time={end_time}
 type RequestForTrades struct {
 	ProductCode string `url:"-"`
@@ -38,7 +37,7 @@ type Ticker struct {
 	Time    types.FtxTime `json:"time"`
 }
 
-// This syntax works to request historical prices
+// Path This syntax works to request historical prices
 // https://ftx.com/api/markets/DEFI-PERP/trades?&start_time=1597687200&end_time=1597773600
 func (req *RequestForTrades) Path() string {
 	return fmt.Sprintf("/markets/%s/trades", req.ProductCode)

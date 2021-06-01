@@ -15,7 +15,7 @@ type Withdraw struct {
 	Address string `json:"address"`
 	Tag     string `json:"tag"`
 	Status  string `json:"status"`
-	Txid    string `json:"txid"`
+	TxId    string `json:"txid"`
 
 	Fee  float64 `json:"fee"`
 	Size float64 `json:"size,string"`

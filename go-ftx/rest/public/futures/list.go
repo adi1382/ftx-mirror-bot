@@ -64,7 +64,7 @@ func (futures ResponseForFutures) Products() []string {
 	return list
 }
 
-// Sort by alphabetical order (by Name)
-func (a ResponseForFutures) Len() int           { return len(a) }
-func (a ResponseForFutures) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a ResponseForFutures) Less(i, j int) bool { return a[i].Name < a[j].Name }
+// Len Sort by alphabetical order (by Name)
+func (futures ResponseForFutures) Len() int           { return len(futures) }
+func (futures ResponseForFutures) Swap(i, j int)      { futures[i], futures[j] = futures[j], futures[i] }
+func (futures ResponseForFutures) Less(i, j int) bool { return futures[i].Name < futures[j].Name }

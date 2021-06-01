@@ -29,7 +29,7 @@ func (p *Client) request(req Requester, results interface{}) error {
 	return nil
 }
 
-func signture(secret, body string) string {
+func signature(secret, body string) string {
 	mac := hmac.New(sha256.New, []byte(secret))
 	mac.Write([]byte(body))
 	return hex.EncodeToString(mac.Sum(nil))
@@ -48,7 +48,7 @@ func (p *Client) newRequest(r Requester) *fasthttp.Request {
 	req.SetBody(body)
 
 	if p.Auth != nil {
-		nonce := fmt.Sprintf("%d", int64(time.Now().UTC().UnixNano()/int64(time.Millisecond)))
+		nonce := fmt.Sprintf("%d", time.Now().UTC().UnixNano()/int64(time.Millisecond))
 		payload := nonce + r.Method() + u.Path
 		if u.RawQuery != "" {
 			payload += "?" + u.RawQuery
@@ -57,31 +57,31 @@ func (p *Client) newRequest(r Requester) *fasthttp.Request {
 
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("FTX-KEY", p.Auth.Key)
-		req.Header.Set("FTX-SIGN", p.Auth.Signture(payload))
+		req.Header.Set("FTX-SIGN", p.Auth.Signature(payload))
 		req.Header.Set("FTX-TS", nonce)
 
 		// set id is there UseSubAccountID
-		subaccount := p.Auth.SubAccount()
-		if subaccount.Nickname != "" {
-			req.Header.Set("FTX-SUBACCOUNT", url.PathEscape(subaccount.Nickname))
+		subAccount := p.Auth.SubAccount()
+		if subAccount.Nickname != "" {
+			req.Header.Set("FTX-SUBACCOUNT", url.PathEscape(subAccount.Nickname))
 		}
 	}
 
 	return req
 }
 
-func (c *Client) do(r Requester) (*fasthttp.Response, error) {
-	req := c.newRequest(r)
+func (p *Client) do(r Requester) (*fasthttp.Response, error) {
+	req := p.newRequest(r)
 
-	// fasthttp for http2.0
+	// fastHTTP for http2.0
 	res := fasthttp.AcquireResponse()
-	err := c.HTTPC.DoTimeout(req, res, c.HTTPTimeout)
+	err := p.HTTPC.DoTimeout(req, res, p.HTTPTimeout)
 	if err != nil {
 		return nil, err
 	}
 
 	// fmt.Printf("%+v\n", string(res.Body()))
-	// no usefull headers
+	// no useful headers
 
 	if res.StatusCode() != 200 {
 		var r = new(Response)

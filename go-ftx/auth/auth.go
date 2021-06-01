@@ -37,17 +37,17 @@ func (p *Config) SubAccount() SubAccount {
 	return p.subAccounts[p.SubAccountID]
 }
 
-func New(key, secret string, subaccounts ...SubAccount) *Config {
+func New(key, secret string, subAccounts ...SubAccount) *Config {
 	config := &Config{
 		Key:          key,
 		Secret:       secret,
 		SubAccountID: 0,
 	}
 
-	if 0 < len(subaccounts) {
+	if 0 < len(subAccounts) {
 		accounts := make(map[int]SubAccount)
-		for i := range subaccounts {
-			accounts[subaccounts[i].UUID] = subaccounts[i]
+		for i := range subAccounts {
+			accounts[subAccounts[i].UUID] = subAccounts[i]
 		}
 		config.subAccounts = accounts
 	}
@@ -55,7 +55,7 @@ func New(key, secret string, subaccounts ...SubAccount) *Config {
 	return config
 }
 
-func (p *Config) Signture(body string) string {
+func (p *Config) Signature(body string) string {
 	mac := hmac.New(sha256.New, []byte(p.Secret))
 	mac.Write([]byte(body))
 	return hex.EncodeToString(mac.Sum(nil))

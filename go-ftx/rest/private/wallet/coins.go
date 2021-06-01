@@ -3,10 +3,10 @@ package wallet
 import (
 	"net/http"
 
-	jsoniter "github.com/json-iterator/go"
+	jsonIter "github.com/json-iterator/go"
 )
 
-var json = jsoniter.ConfigCompatibleWithStandardLibrary
+var json = jsonIter.ConfigCompatibleWithStandardLibrary
 
 type RequestForCoins struct {
 }

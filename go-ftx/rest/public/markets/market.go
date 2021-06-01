@@ -9,7 +9,7 @@ import (
 	"github.com/dustin/go-humanize"
 )
 
-// RequestForMarkets arg productcode can be blank
+// RequestForMarkets arg product code can be blank
 type RequestForMarkets struct {
 	ProductCode string `url:"-"`
 }
@@ -109,6 +109,8 @@ func (markets ResponseForMarkets) Ranking(base int) []string {
 	return list
 }
 
-func (a ResponseForMarkets) Len() int           { return len(a) }
-func (a ResponseForMarkets) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a ResponseForMarkets) Less(i, j int) bool { return a[i].VolumeUsd24H < a[j].VolumeUsd24H }
+func (markets ResponseForMarkets) Len() int      { return len(markets) }
+func (markets ResponseForMarkets) Swap(i, j int) { markets[i], markets[j] = markets[j], markets[i] }
+func (markets ResponseForMarkets) Less(i, j int) bool {
+	return markets[i].VolumeUsd24H < markets[j].VolumeUsd24H
+}
