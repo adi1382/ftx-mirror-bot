@@ -8,14 +8,14 @@ type symbolInfo struct {
 	marketType     string //spot, perpetual or futures
 }
 
-func (c *Client) updateSymbolInfo() []*symbolInfo {
+func (c *Client) updateSymbolInfo() {
 	marketResponse := c.getAllMarkets()
 	futuresResponse := c.getAllFuturesList()
 
-	allSymbolInfo := make([]*symbolInfo, 0, 600)
+	c.symbolsInfo = make([]*symbolInfo, 0, 600)
 
 	for i := range *futuresResponse {
-		allSymbolInfo = append(allSymbolInfo, &symbolInfo{
+		c.symbolsInfo = append(c.symbolsInfo, &symbolInfo{
 			symbol:         (*futuresResponse)[i].Name,
 			enabled:        (*futuresResponse)[i].Enabled,
 			priceIncrement: (*futuresResponse)[i].PriceIncrement,
@@ -26,7 +26,7 @@ func (c *Client) updateSymbolInfo() []*symbolInfo {
 
 	for i := range *marketResponse {
 		if (*marketResponse)[i].Type == "spot" {
-			allSymbolInfo = append(allSymbolInfo, &symbolInfo{
+			c.symbolsInfo = append(c.symbolsInfo, &symbolInfo{
 				symbol:         (*marketResponse)[i].Name,
 				enabled:        (*marketResponse)[i].Enabled,
 				priceIncrement: (*marketResponse)[i].PriceIncrement,
@@ -36,5 +36,4 @@ func (c *Client) updateSymbolInfo() []*symbolInfo {
 		}
 	}
 
-	return allSymbolInfo
 }

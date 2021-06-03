@@ -29,25 +29,14 @@ func connect(host string) (*websocket.Conn, error) {
 	return conn, err
 }
 
-func ReadFromWSToChannel(c *websocket.Conn) {
-
-	for {
-		_, message, err := c.ReadMessage()
-		if err != nil {
-			panic(err)
-		}
-
-		fmt.Println("Message Received: ", string(message))
-	}
-}
-
 func (ws *WSConnection) subscribeToPrivateChannels(channels []string) {
 	for i := range channels {
 		err := ws.Conn.WriteJSON(&wsMessage{
 			Op:      "subscribe",
 			Channel: channels[i]})
 		if err != nil {
-			panic(err)
+			ws.websocketError(err)
+			return
 		}
 	}
 }
@@ -77,13 +66,20 @@ func (ws *WSConnection) pingPong() {
 		select {
 		case <-ticker.C:
 			if err := ws.Conn.WriteMessage(websocket.PingMessage, []byte(`{"op": "ping"}`)); err != nil {
-				panic(err)
+				ws.websocketError(err)
+				return
 			}
 
 		default:
-			// End this function from here, when restarting
+			if ws.isRestartRequired.Load() {
+				return
+			}
 		}
 
 		time.Sleep(time.Millisecond)
 	}
+}
+
+func (ws *WSConnection) websocketError(err error) {
+	panic(err)
 }

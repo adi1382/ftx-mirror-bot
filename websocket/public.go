@@ -1,23 +1,30 @@
 package websocket
 
 import (
+	"fmt"
 	"github.com/gorilla/websocket"
+	"go.uber.org/atomic"
 )
 
 type WSConnection struct {
-	Conn   *websocket.Conn
-	key    string
-	secret string
+	Conn              *websocket.Conn
+	isRestartRequired *atomic.Bool
+	key               string
+	secret            string
 }
 
-func NewSocketConnection(key, secret string) WSConnection {
+func NewSocketConnection(key, secret string, restartCounter *atomic.Bool) WSConnection {
+	ws := WSConnection{key: key, secret: secret, isRestartRequired: restartCounter}
+	return ws
+}
+
+func (ws *WSConnection) Connect() {
 	conn, err := connect("ftx.com")
 	if err != nil {
-		panic(err)
+		ws.websocketError(err)
 	}
-	ws := WSConnection{conn, key, secret}
 	go ws.pingPong()
-	return ws
+	ws.Conn = conn
 }
 
 func (ws *WSConnection) AuthenticateWebsocketConnection() {
@@ -29,4 +36,16 @@ func (ws *WSConnection) AuthenticateWebsocketConnection() {
 
 func (ws *WSConnection) SubscribeToPrivateStreams() {
 	ws.subscribeToPrivateChannels([]string{"fills", "orders"})
+}
+
+func ReadFromWSToChannel(c *websocket.Conn) {
+
+	for {
+		_, message, err := c.ReadMessage()
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Println("Message Received: ", string(message))
+	}
 }
