@@ -6,6 +6,7 @@ import (
 	"github.com/adi1382/ftx-mirror-bot/websocket"
 	"go.uber.org/atomic"
 	"sync"
+	"time"
 )
 
 func NewClient(apiKey, secret string, isRestartRequired *atomic.Bool) *Client {
@@ -15,10 +16,12 @@ func NewClient(apiKey, secret string, isRestartRequired *atomic.Bool) *Client {
 	c.isRestartRequired = isRestartRequired
 	c.updateSymbolInfo()
 	c.wsConnection = websocket.NewSocketConnection(apiKey, secret, isRestartRequired)
+	c.userStream = make(chan []byte, 100)
 	return &c
 }
 
 type Client struct {
+	typeOfAccount                 string
 	apiKey                        string
 	rest                          *rest.Client
 	symbolsInfo                   []*symbolInfo
@@ -29,8 +32,6 @@ type Client struct {
 	isRestartRequired             *atomic.Bool
 	leverage                      atomic.Float64
 	totalCollateral               atomic.Float64
-	subAccountSubscriptions       []chan []byte
-	testnet                       bool
 	running                       atomic.Bool
 	balanceUpdateRate             float64
 	symbolTickers                 map[string]float64
@@ -54,5 +55,41 @@ func SubscribeToClientStream(c *Client, ch chan []byte) {
 }
 
 func (c *Client) Initialize() {
+	c.wsConnection.Connect(c.userStream)
 
+	c.wsConnection.AuthenticateWebsocketConnection()
+	c.wsConnection.SubscribeToPrivateStreams()
+	c.checkIfStreamsAreSuccessfullySubscribed("fills", "orders")
+	if !c.runningStatus() {
+		return
+	}
+
+	c.initializeAccountInfoAndPositions()
+	c.initializeOrders()
+
+	go c.receiveStreamingData()
+}
+
+func (c *Client) runningStatus() bool {
+	return c.running.Load()
+}
+
+func (c *Client) restart() {
+	c.isRestartRequired.Store(true)
+	c.running.Store(false)
+}
+
+func (c *Client) checkForRestart() {
+
+	for {
+		time.Sleep(time.Millisecond)
+		if c.isRestartRequired.Load() {
+			c.restart()
+			return
+		}
+
+		if !c.runningStatus() {
+			return
+		}
+	}
 }

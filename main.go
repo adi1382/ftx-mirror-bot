@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	ws "github.com/adi1382/ftx-mirror-bot/websocket"
+	"github.com/adi1382/ftx-mirror-bot/client"
 	"go.uber.org/atomic"
 )
 
@@ -13,18 +13,10 @@ func init() {
 }
 
 func main() {
-	conn := ws.NewSocketConnection("kqAyKxRHgQreYe4iNLB7qnpSp1zQsjQP2ePFUDjq", "PhqPf5qpoCp7aFjYC4Ua5ZJTAHuBP20P0TwyZvOX", isRestartRequired)
-	ch := conn.Connect()
-	conn.AuthenticateWebsocketConnection()
-	conn.SubscribeToPrivateStreams()
+	hostClient := client.NewClient("kqAyKxRHgQreYe4iNLB7qnpSp1zQsjQP2ePFUDjq", "PhqPf5qpoCp7aFjYC4Ua5ZJTAHuBP20P0TwyZvOX", isRestartRequired)
 
-	go func() {
-		for {
-			msg := <-ch
-			fmt.Println(string(msg))
-		}
-	}()
+	hostClient.Initialize()
+	fmt.Println("$$$$$$$444")
 
 	select {}
-
 }

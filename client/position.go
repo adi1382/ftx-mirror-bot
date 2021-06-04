@@ -7,6 +7,11 @@ type position struct {
 }
 
 func (c *Client) initializeAccountInfoAndPositions() {
+	//Criteria to call this function
+	//1. Websockets should be connected
+	//2. There should be no messages pending from Fills channel before calling this function
+	//3. There should be no messages pending after calling this functions
+
 	c.openPositionsLock.Lock()
 	defer c.openPositionsLock.Unlock()
 

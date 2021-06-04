@@ -33,7 +33,7 @@ func (c *Client) initializeOrders() {
 }
 
 func (c *Client) generateNativeOrdersFromRestResponse(openOrders *orders.ResponseForOpenOrder) {
-	c.openPositionsLock.Lock()
+	c.openOrdersLock.Lock()
 	defer c.openOrdersLock.Unlock()
 
 	for i := range *openOrders {

@@ -29,17 +29,16 @@ func connect(host string) (*websocket.Conn, error) {
 	return conn, err
 }
 
-func (ws *WSConnection) readFromWSToChannel(ch chan []byte) {
+func (ws *WSConnection) readFromWSToChannel(chReadWS chan<- []byte) {
 	for {
 		_, message, err := ws.Conn.ReadMessage()
 
 		if err != nil {
 			ws.websocketError(err)
-			ch <- []byte("quit")
+			chReadWS <- []byte("quit")
 			return
 		}
-
-		ch <- message
+		chReadWS <- message
 	}
 }
 
