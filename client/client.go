@@ -27,7 +27,8 @@ type Client struct {
 	subscriptionsToUserStream     []chan []byte //is subscribed by subAccounts to hostAccounts
 	subscriptionsToUserStreamLock sync.Mutex
 	isRestartRequired             *atomic.Bool
-	leverage                      float64
+	leverage                      atomic.Float64
+	totalCollateral               atomic.Float64
 	subAccountSubscriptions       []chan []byte
 	testnet                       bool
 	running                       atomic.Bool
@@ -36,9 +37,9 @@ type Client struct {
 	symbolTickerLock              sync.Mutex
 	symbolTickerLastUpdated       atomic.Int64
 	openOrders                    []*order
-	allPositions                  []*position
+	openPositions                 []*position
 	openOrdersLock                sync.Mutex
-	positionLock                  sync.Mutex
+	openPositionsLock             sync.Mutex
 	isInitializationCompleted     atomic.Bool
 	lastBalanceUpdateTimeUnix     atomic.Int64
 	nextBalanceUpdateTimeUnix     atomic.Int64

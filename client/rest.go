@@ -1,28 +1,49 @@
 package client
 
 import (
+	"github.com/adi1382/ftx-mirror-bot/go-ftx/rest/private/account"
+	"github.com/adi1382/ftx-mirror-bot/go-ftx/rest/private/orders"
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/rest/public/futures"
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/rest/public/markets"
 )
 
 func (c *Client) getAllFuturesList() *futures.ResponseForFutures {
 	resp, err := c.rest.Futures(&futures.RequestForFutures{})
-	if err != nil {
-		c.restError(err)
-	}
+	c.restError(err)
 
 	return resp
 }
 
 func (c *Client) getAllMarkets() *markets.ResponseForMarkets {
 	resp, err := c.rest.Markets(&markets.RequestForMarkets{})
-	if err != nil {
-		c.restError(err)
-	}
+	c.restError(err)
+
+	return resp
+}
+
+func (c *Client) getAccountInformation() *account.ResponseForInformation {
+	accountInformation, err := c.rest.Information(&account.RequestForInformation{})
+	c.restError(err)
+	return accountInformation
+}
+
+// This Function is not used by the mirror bot, as same results could be obtained from getAccountInformation()
+//func (c *Client) getAllPositions(showAvgPrice bool) *account.ResponseForPositions {
+//	resp, err := c.rest.Positions(&account.RequestForPositions{ShowAvgPrice: showAvgPrice})
+//	c.restError(err)
+//
+//	return resp
+//}
+
+func (c *Client) getAllOpenOrders() *orders.ResponseForOpenOrder {
+	resp, err := c.rest.OpenOrder(&orders.RequestForOpenOrder{})
+	c.restError(err)
 
 	return resp
 }
 
 func (c *Client) restError(err error) {
-	panic(err)
+	if err != nil {
+		panic(err)
+	}
 }

@@ -9,11 +9,13 @@ type symbolInfo struct {
 }
 
 func (c *Client) updateSymbolInfo() {
-	marketResponse := c.getAllMarkets()
-	futuresResponse := c.getAllFuturesList()
-
 	c.symbolsInfo = make([]*symbolInfo, 0, 600)
+	c.updateSymbolInfoForFutures()
+	c.updateSymbolInfoForSpot()
+}
 
+func (c *Client) updateSymbolInfoForFutures() {
+	futuresResponse := c.getAllFuturesList()
 	for i := range *futuresResponse {
 		c.symbolsInfo = append(c.symbolsInfo, &symbolInfo{
 			symbol:         (*futuresResponse)[i].Name,
@@ -23,7 +25,10 @@ func (c *Client) updateSymbolInfo() {
 			marketType:     (*futuresResponse)[i].Type,
 		})
 	}
+}
 
+func (c *Client) updateSymbolInfoForSpot() {
+	marketResponse := c.getAllMarkets()
 	for i := range *marketResponse {
 		if (*marketResponse)[i].Type == "spot" {
 			c.symbolsInfo = append(c.symbolsInfo, &symbolInfo{
@@ -35,5 +40,4 @@ func (c *Client) updateSymbolInfo() {
 			})
 		}
 	}
-
 }
