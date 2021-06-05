@@ -26,7 +26,7 @@ type Client struct {
 	typeOfAccount                  string
 	apiKey                         string
 	rest                           *rest.Client
-	symbolsInfo                    []*symbolInfo
+	symbolsInfo                    map[string]symbolInfo
 	wsConnection                   websocket.WSConnection
 	userStream                     chan []byte
 	subscriptionsToUserStream      []chan []byte //is subscribed by subAccounts to hostAccounts

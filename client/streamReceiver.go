@@ -179,5 +179,6 @@ func (c *Client) handleWebSocketData(data []byte, channel string) {
 		err := json.Unmarshal(data, newFillUpdate)
 		c.unhandledError(err)
 		fmt.Println("New Fill Detected!")
+		c.handleFillUpdateFromStream(newFillUpdate)
 	}
 }

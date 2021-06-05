@@ -4,6 +4,7 @@ import (
 	"github.com/adi1382/ftx-mirror-bot/constants"
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/rest/private/account"
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/rest/private/fills"
+	"github.com/adi1382/ftx-mirror-bot/websocket"
 	"time"
 )
 
@@ -71,3 +72,33 @@ func (c *Client) areAnyFillsAfterAccountInformationCall(fillsResponse *fills.Res
 
 	return false
 }
+
+///////////////////////// BEGIN --> STREAM ORDER FUNCTIONALITIES /////////////////////////
+
+func (c *Client) handleFillUpdateFromStream(newFill *websocket.FillsData) {
+	c.openPositionsLock.Lock()
+	defer c.openPositionsLock.Unlock()
+
+	if index := c.checkIfPositionAlreadyExistsForSymbol(newFill); index > -1 {
+		c.updateExistingPosition(newFill, index)
+	}
+
+}
+
+func (c *Client) checkIfPositionAlreadyExistsForSymbol(newFill *websocket.FillsData) int {
+	positionIndex := -1
+
+	for i := range c.openPositions {
+		if c.openPositions[i].Market == newFill.Future {
+			return i
+		}
+	}
+
+	return positionIndex
+}
+
+func (c *Client) updateExistingPosition(newFill *websocket.FillsData, positionIndex int) {
+
+}
+
+///////////////////////// END --> STREAM ORDER FUNCTIONALITIES /////////////////////////
