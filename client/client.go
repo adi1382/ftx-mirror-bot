@@ -3,6 +3,7 @@ package client
 import (
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/auth"
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/rest"
+	"github.com/adi1382/ftx-mirror-bot/go-ftx/rest/private/fills"
 	"github.com/adi1382/ftx-mirror-bot/websocket"
 	"go.uber.org/atomic"
 	"sync"
@@ -17,35 +18,40 @@ func NewClient(apiKey, secret string, isRestartRequired *atomic.Bool) *Client {
 	c.updateSymbolInfo()
 	c.wsConnection = websocket.NewSocketConnection(apiKey, secret, isRestartRequired)
 	c.userStream = make(chan []byte, 100)
+	c.running.Store(true)
 	return &c
 }
 
 type Client struct {
-	typeOfAccount                 string
-	apiKey                        string
-	rest                          *rest.Client
-	symbolsInfo                   []*symbolInfo
-	wsConnection                  websocket.WSConnection
-	userStream                    chan []byte
-	subscriptionsToUserStream     []chan []byte //is subscribed by subAccounts to hostAccounts
-	subscriptionsToUserStreamLock sync.Mutex
-	isRestartRequired             *atomic.Bool
-	leverage                      atomic.Float64
-	totalCollateral               atomic.Float64
-	running                       atomic.Bool
-	balanceUpdateRate             float64
-	symbolTickers                 map[string]float64
-	symbolTickerLock              sync.Mutex
-	symbolTickerLastUpdated       atomic.Int64
-	openOrders                    []*order
-	openPositions                 []*position
-	openOrdersLock                sync.Mutex
-	openPositionsLock             sync.Mutex
-	isInitializationCompleted     atomic.Bool
-	lastBalanceUpdateTimeUnix     atomic.Int64
-	nextBalanceUpdateTimeUnix     atomic.Int64
-	listenKeyLastUpdated          atomic.Int64 // This is still required to be fully implemented
-	wg                            *sync.WaitGroup
+	typeOfAccount                  string
+	apiKey                         string
+	rest                           *rest.Client
+	symbolsInfo                    []*symbolInfo
+	wsConnection                   websocket.WSConnection
+	userStream                     chan []byte
+	subscriptionsToUserStream      []chan []byte //is subscribed by subAccounts to hostAccounts
+	subscriptionsToUserStreamLock  sync.Mutex
+	isRestartRequired              *atomic.Bool
+	leverage                       atomic.Float64
+	totalCollateral                atomic.Float64
+	running                        atomic.Bool
+	isPositionCoolDownPeriod       atomic.Bool
+	fillsForPositionInitialization *fills.Response
+	lastFillUnixTime               int64
+
+	balanceUpdateRate         float64
+	symbolTickers             map[string]float64
+	symbolTickerLock          sync.Mutex
+	symbolTickerLastUpdated   atomic.Int64
+	openOrders                []*order
+	openPositions             []*position
+	openOrdersLock            sync.Mutex
+	openPositionsLock         sync.Mutex
+	isInitializationCompleted atomic.Bool
+	lastBalanceUpdateTimeUnix atomic.Int64
+	nextBalanceUpdateTimeUnix atomic.Int64
+	listenKeyLastUpdated      atomic.Int64 // This is still required to be fully implemented
+	wg                        *sync.WaitGroup
 }
 
 func SubscribeToClientStream(c *Client, ch chan []byte) {
