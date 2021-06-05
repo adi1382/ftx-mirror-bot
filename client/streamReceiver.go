@@ -12,7 +12,6 @@ func (c *Client) receiveStreamingData() {
 		msg := <-c.userStream
 		fmt.Println(string(msg))
 		c.sendMessageToSubscriptions(msg) //This is used only for host accounts
-
 		if c.checkQuitStream(msg) {
 			return
 		}
@@ -20,8 +19,15 @@ func (c *Client) receiveStreamingData() {
 		wsResponse := new(websocket.Response)
 		err := json.Unmarshal(msg, wsResponse)
 		c.unhandledError(err)
-		fmt.Println(wsResponse)
 
+		if c.checkIfWSDataNil(wsResponse.Data) {
+			continue
+		}
+
+		rawData, err := json.Marshal(wsResponse.Data)
+		c.unhandledError(err)
+
+		c.handleWebSocketData(rawData, wsResponse.Channel)
 	}
 }
 
@@ -146,8 +152,31 @@ func (c *Client) checkIfStreamsAreSuccessfullySubscribed(channels ...string) {
 	}
 }
 
+func (c *Client) checkIfWSDataNil(data interface{}) bool {
+	if data == nil {
+		fmt.Println("Data Nil")
+		return true
+	}
+	return false
+}
+
 func (c *Client) unhandledError(err error) {
 	if err != nil {
 		panic(err)
+	}
+}
+
+func (c *Client) handleWebSocketData(data []byte, channel string) {
+	switch channel {
+	case "orders":
+		newOrderUpdate := new(order)
+		err := json.Unmarshal(data, newOrderUpdate)
+		c.unhandledError(err)
+		fmt.Println("New Order Detected!")
+	case "fills":
+		newFillUpdate := new(websocket.FillsData)
+		err := json.Unmarshal(data, newFillUpdate)
+		c.unhandledError(err)
+		fmt.Println("New Fill Detected!")
 	}
 }

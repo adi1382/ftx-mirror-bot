@@ -19,9 +19,9 @@ import "github.com/adi1382/ftx-mirror-bot/optional"
 //data(optional)
 
 type Response struct {
-	Channel        optional.String `json:"channel"`
+	Channel        string          `json:"channel"`
 	Market         optional.String `json:"market"`
-	TypeOfResponse optional.String `json:"type"`
+	TypeOfResponse string          `json:"type"`
 	Code           optional.Int64  `json:"code"`
 	Msg            optional.String `json:"msg"`
 	Data           interface{}     `json:"data"`
