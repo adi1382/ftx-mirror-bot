@@ -1,7 +1,9 @@
 package client
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/adi1382/ftx-mirror-bot/websocket"
 	"time"
 )
 
@@ -15,20 +17,11 @@ func (c *Client) receiveStreamingData() {
 			return
 		}
 
-		//eventName := c.getEventName(msg)
-		//
-		//switch eventName {
-		//case "ORDER_TRADE_UPDATE":
-		//	c.processOrderTradeUpdate(msg)
-		//case "ACCOUNT_UPDATE":
-		//	c.processAccountUpdate(msg)
-		//case "ACCOUNT_CONFIG_UPDATE":
-		//	c.processAccountConfigUpdate(msg)
-		//case "listenKeyExpired":
-		//	c.Restart()
-		//default:
-		//	continue
-		//}
+		wsResponse := new(websocket.Response)
+		err := json.Unmarshal(msg, wsResponse)
+		c.unhandledError(err)
+		fmt.Println(wsResponse)
+
 	}
 }
 
@@ -150,5 +143,11 @@ func (c *Client) checkIfStreamsAreSuccessfullySubscribed(channels ...string) {
 			return
 		}
 		time.Sleep(time.Millisecond)
+	}
+}
+
+func (c *Client) unhandledError(err error) {
+	if err != nil {
+		panic(err)
 	}
 }

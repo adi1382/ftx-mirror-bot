@@ -60,7 +60,7 @@ func (c *Client) generateNativeOrderFromRestOrder(restOrder orders.OpenOrder) *o
 	nativeOrder.PostOnly = restOrder.PostOnly
 
 	if restOrder.ClientID != "" {
-		nativeOrder.ClientId.Set(restOrder.ClientID)
+		nativeOrder.ClientId.SetValue(restOrder.ClientID)
 	}
 
 	return nativeOrder

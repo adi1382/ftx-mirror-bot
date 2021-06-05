@@ -37,21 +37,20 @@ type Client struct {
 	running                        atomic.Bool
 	isPositionCoolDownPeriod       atomic.Bool
 	fillsForPositionInitialization *fills.Response
-	lastFillUnixTime               int64
-
-	balanceUpdateRate         float64
-	symbolTickers             map[string]float64
-	symbolTickerLock          sync.Mutex
-	symbolTickerLastUpdated   atomic.Int64
-	openOrders                []*order
-	openPositions             []*position
-	openOrdersLock            sync.Mutex
-	openPositionsLock         sync.Mutex
-	isInitializationCompleted atomic.Bool
-	lastBalanceUpdateTimeUnix atomic.Int64
-	nextBalanceUpdateTimeUnix atomic.Int64
-	listenKeyLastUpdated      atomic.Int64 // This is still required to be fully implemented
-	wg                        *sync.WaitGroup
+	lastFillUnixTime               int64 // Applied till here
+	balanceUpdateRate              float64
+	symbolTickers                  map[string]float64
+	symbolTickerLock               sync.Mutex
+	symbolTickerLastUpdated        atomic.Int64
+	openOrders                     []*order
+	openPositions                  []*position
+	openOrdersLock                 sync.Mutex
+	openPositionsLock              sync.Mutex
+	isInitializationCompleted      atomic.Bool
+	lastBalanceUpdateTimeUnix      atomic.Int64
+	nextBalanceUpdateTimeUnix      atomic.Int64
+	listenKeyLastUpdated           atomic.Int64 // This is still required to be fully implemented
+	wg                             *sync.WaitGroup
 }
 
 func SubscribeToClientStream(c *Client, ch chan []byte) {
