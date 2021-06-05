@@ -29,10 +29,10 @@ func (c *Client) getAccountInformation() *account.ResponseForInformation {
 	return accountInformation
 }
 
-func (c *Client) getFills(seconds int64) *fills.Response {
+func (c *Client) getFills(seconds time.Duration) *fills.Response {
 	//resp, err := c.rest.Fills(&fills.Request{})
 	resp, err := c.rest.Fills(&fills.Request{
-		Start: time.Now().Unix() - seconds,
+		Start: time.Now().Unix() - int64(seconds/time.Second),
 	})
 	c.restError(err)
 

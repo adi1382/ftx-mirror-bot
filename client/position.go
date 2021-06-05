@@ -5,6 +5,7 @@ import (
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/rest/private/account"
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/rest/private/fills"
 	"github.com/adi1382/ftx-mirror-bot/websocket"
+	"math"
 	"time"
 )
 
@@ -26,15 +27,16 @@ func (c *Client) initializeAccountInfoAndPositions() {
 
 	c.openPositions = c.openPositions[:0]
 
-	accountInformation := new(account.ResponseForInformation)
-	fillsResponse := new(fills.Response)
-
-	c.updateAccountInformationAndFills(accountInformation, fillsResponse)
+	accountInformation := c.fetchAccountInformationAndUpdateLastFillTime()
 
 	c.leverage.Store(accountInformation.Leverage)
 	c.totalCollateral.Store(accountInformation.Collateral)
 
 	for i := range accountInformation.Positions {
+		if accountInformation.Positions[i].NetSize == 0 {
+			continue
+		}
+
 		newPosition := new(position)
 		newPosition.Market = accountInformation.Positions[i].Future
 		newPosition.Size = accountInformation.Positions[i].NetSize
@@ -44,15 +46,15 @@ func (c *Client) initializeAccountInfoAndPositions() {
 	}
 }
 
-func (c *Client) updateAccountInformationAndFills(accountInformation *account.ResponseForInformation, fillsResponse *fills.Response) {
+func (c *Client) fetchAccountInformationAndUpdateLastFillTime() *account.ResponseForInformation {
 	for {
 		accountInformationRestCallTime := time.Now().Unix()
-		accountInformation = c.getAccountInformation()
-		fillsResponse = c.getFills(constants.PositionsInitializingCoolDown)
+		accountInformation := c.getAccountInformation()
+		fillsResponse := c.getFills(constants.PositionsInitializingCoolDown)
 		if c.areAnyFillsAfterAccountInformationCall(fillsResponse, accountInformationRestCallTime) {
 			continue
 		}
-		break
+		return accountInformation
 	}
 }
 
@@ -66,11 +68,16 @@ func (c *Client) areAnyFillsAfterAccountInformationCall(fillsResponse *fills.Res
 	if len(*fillsResponse) > 0 {
 		c.lastFillUnixTime = (*fillsResponse)[0].Time.Unix()
 		c.isPositionCoolDownPeriod.Store(true)
+		c.shutDownPositionCoolDownAfter(constants.PositionsInitializingCoolDown)
 	}
 
-	c.fillsForPositionInitialization = fillsResponse
-
 	return false
+}
+
+func (c *Client) shutDownPositionCoolDownAfter(coolDownTime time.Duration) {
+	time.AfterFunc(coolDownTime, func() {
+		c.isPositionCoolDownPeriod.Store(false)
+	})
 }
 
 ///////////////////////// BEGIN --> STREAM ORDER FUNCTIONALITIES /////////////////////////
@@ -79,8 +86,29 @@ func (c *Client) handleFillUpdateFromStream(newFill *websocket.FillsData) {
 	c.openPositionsLock.Lock()
 	defer c.openPositionsLock.Unlock()
 
+	// c.isPositionCoolDownPeriod is automatically set to off after few seconds after initialization
+	if c.isPositionCoolDownPeriod.Load() {
+		if newFill.Time.Unix() < c.lastFillUnixTime {
+			return
+		}
+	}
+
+	if val, ok := c.symbolsInfo[newFill.Market]; !ok {
+		return
+	} else {
+		if val.marketType == "spot" {
+			return
+		}
+	}
+
 	if index := c.checkIfPositionAlreadyExistsForSymbol(newFill); index > -1 {
 		c.updateExistingPosition(newFill, index)
+		c.removePositionIfRequired(index)
+		return
+	} else {
+		index = c.insertNewPosition(newFill)
+		c.removePositionIfRequired(index)
+		return
 	}
 
 }
@@ -98,7 +126,43 @@ func (c *Client) checkIfPositionAlreadyExistsForSymbol(newFill *websocket.FillsD
 }
 
 func (c *Client) updateExistingPosition(newFill *websocket.FillsData, positionIndex int) {
+	var fillSize float64
+	if newFill.Side == "buy" {
+		fillSize = math.Abs(newFill.Size)
+	} else {
+		fillSize = -math.Abs(newFill.Size)
+	}
 
+	c.openPositions[positionIndex].Size += fillSize
+
+	if c.openPositions[positionIndex].Size >= 0 {
+		c.openPositions[positionIndex].Side = "buy"
+	} else {
+		c.openPositions[positionIndex].Side = "sell"
+	}
+}
+
+func (c *Client) removePositionIfRequired(positionIndex int) {
+	if c.openPositions[positionIndex].Size == 0 {
+		c.openPositions = append(c.openPositions[:positionIndex], c.openPositions[positionIndex+1:]...)
+	}
+}
+
+func (c *Client) insertNewPosition(newFill *websocket.FillsData) int {
+	var fillSize float64
+	if newFill.Side == "buy" {
+		fillSize = math.Abs(newFill.Size)
+	} else {
+		fillSize = -math.Abs(newFill.Size)
+	}
+
+	c.openPositions = append(c.openPositions, &position{
+		Market: newFill.Future,
+		Side:   newFill.Side,
+		Size:   fillSize,
+	})
+
+	return len(c.openPositions) - 1
 }
 
 ///////////////////////// END --> STREAM ORDER FUNCTIONALITIES /////////////////////////

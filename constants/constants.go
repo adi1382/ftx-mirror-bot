@@ -9,4 +9,4 @@ const PingPeriod = 15 * time.Second
 const PongWait = 20 * time.Second
 
 // PositionsInitializingCoolDown Time for which fills are requested to prevent contradiction with fill ws channel
-const PositionsInitializingCoolDown = 15 // time in seconds
+const PositionsInitializingCoolDown = 15 * time.Second

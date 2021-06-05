@@ -3,7 +3,6 @@ package client
 import (
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/auth"
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/rest"
-	"github.com/adi1382/ftx-mirror-bot/go-ftx/rest/private/fills"
 	"github.com/adi1382/ftx-mirror-bot/websocket"
 	"go.uber.org/atomic"
 	"sync"
@@ -23,41 +22,41 @@ func NewClient(apiKey, secret string, isRestartRequired *atomic.Bool) *Client {
 }
 
 type Client struct {
-	typeOfAccount                  string
-	apiKey                         string
-	rest                           *rest.Client
-	symbolsInfo                    map[string]symbolInfo
-	wsConnection                   websocket.WSConnection
-	userStream                     chan []byte
-	subscriptionsToUserStream      []chan []byte //is subscribed by subAccounts to hostAccounts
-	subscriptionsToUserStreamLock  sync.Mutex
-	isRestartRequired              *atomic.Bool
-	leverage                       atomic.Float64
-	totalCollateral                atomic.Float64
-	running                        atomic.Bool
-	isPositionCoolDownPeriod       atomic.Bool
-	fillsForPositionInitialization *fills.Response
-	lastFillUnixTime               int64 // Applied till here
-	balanceUpdateRate              float64
-	symbolTickers                  map[string]float64
-	symbolTickerLock               sync.Mutex
-	symbolTickerLastUpdated        atomic.Int64
-	openOrders                     []*order
-	openPositions                  []*position
-	openOrdersLock                 sync.Mutex
-	openPositionsLock              sync.Mutex
-	isInitializationCompleted      atomic.Bool
-	lastBalanceUpdateTimeUnix      atomic.Int64
-	nextBalanceUpdateTimeUnix      atomic.Int64
-	listenKeyLastUpdated           atomic.Int64 // This is still required to be fully implemented
-	wg                             *sync.WaitGroup
+	typeOfAccount                 string
+	apiKey                        string
+	rest                          *rest.Client
+	symbolsInfo                   map[string]symbolInfo
+	wsConnection                  websocket.WSConnection
+	userStream                    chan []byte
+	subscriptionsToUserStream     []chan []byte //is subscribed by subAccounts to hostAccounts
+	subscriptionsToUserStreamLock sync.Mutex
+	isRestartRequired             *atomic.Bool
+	leverage                      atomic.Float64
+	totalCollateral               atomic.Float64
+	running                       atomic.Bool
+	isPositionCoolDownPeriod      atomic.Bool
+	//fillsForPositionInitialization *fills.Response // not needed, only last fill unix could be used to remove unnecessary fills through stream
+	lastFillUnixTime          int64 // Applied till here
+	balanceUpdateRate         float64
+	symbolTickers             map[string]float64
+	symbolTickerLock          sync.Mutex
+	symbolTickerLastUpdated   atomic.Int64
+	openOrders                []*order
+	openPositions             []*position
+	openOrdersLock            sync.Mutex
+	openPositionsLock         sync.Mutex
+	isInitializationCompleted atomic.Bool
+	lastBalanceUpdateTimeUnix atomic.Int64
+	nextBalanceUpdateTimeUnix atomic.Int64
+	listenKeyLastUpdated      atomic.Int64 // This is still required to be fully implemented
+	wg                        *sync.WaitGroup
 }
 
-func SubscribeToClientStream(c *Client, ch chan []byte) {
-	c.subscriptionsToUserStreamLock.Lock()
-	c.subscriptionsToUserStream = append(c.subscriptionsToUserStream, ch)
-	c.subscriptionsToUserStreamLock.Unlock()
-}
+//func SubscribeToClientStream(c *Client, ch chan []byte) {
+//	c.subscriptionsToUserStreamLock.Lock()
+//	c.subscriptionsToUserStream = append(c.subscriptionsToUserStream, ch)
+//	c.subscriptionsToUserStreamLock.Unlock()
+//}
 
 func (c *Client) Initialize() {
 	c.wsConnection.Connect(c.userStream)
@@ -97,4 +96,30 @@ func (c *Client) checkForRestart() {
 			return
 		}
 	}
+}
+
+func (c *Client) ActiveOrders() []order {
+	c.openOrdersLock.Lock()
+	defer c.openOrdersLock.Unlock()
+
+	openOrders := make([]order, 0, 5)
+	for i := range c.openOrders {
+		openOrders = append(openOrders, *c.openOrders[i])
+	}
+
+	return openOrders
+
+}
+
+func (c *Client) ActivePositions() []position {
+	c.openPositionsLock.Lock()
+	defer c.openPositionsLock.Unlock()
+
+	openPositions := make([]position, 0, 5)
+	for i := range c.openPositions {
+		openPositions = append(openPositions, *c.openPositions[i])
+	}
+
+	return openPositions
+
 }

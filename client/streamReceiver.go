@@ -10,7 +10,6 @@ import (
 func (c *Client) receiveStreamingData() {
 	for {
 		msg := <-c.userStream
-		fmt.Println(string(msg))
 		c.sendMessageToSubscriptions(msg) //This is used only for host accounts
 		if c.checkQuitStream(msg) {
 			return
@@ -154,7 +153,6 @@ func (c *Client) checkIfStreamsAreSuccessfullySubscribed(channels ...string) {
 
 func (c *Client) checkIfWSDataNil(data interface{}) bool {
 	if data == nil {
-		fmt.Println("Data Nil")
 		return true
 	}
 	return false
@@ -172,13 +170,11 @@ func (c *Client) handleWebSocketData(data []byte, channel string) {
 		newOrderUpdate := new(order)
 		err := json.Unmarshal(data, newOrderUpdate)
 		c.unhandledError(err)
-		fmt.Println("New Order Detected!")
 		c.handleOrderUpdateFromStream(newOrderUpdate)
 	case "fills":
 		newFillUpdate := new(websocket.FillsData)
 		err := json.Unmarshal(data, newFillUpdate)
 		c.unhandledError(err)
-		fmt.Println("New Fill Detected!")
 		c.handleFillUpdateFromStream(newFillUpdate)
 	}
 }
