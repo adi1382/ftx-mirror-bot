@@ -65,3 +65,61 @@ func (c *Client) generateNativeOrderFromRestOrder(restOrder orders.OpenOrder) *o
 
 	return nativeOrder
 }
+
+///////////////////////// BEGIN --> STREAM ORDER FUNCTIONALITIES /////////////////////////
+
+func (c *Client) handleOrderUpdateFromStream(newOrder *order) {
+	c.openOrdersLock.Lock()
+	defer c.openOrdersLock.Unlock()
+
+	removalRequired := c.checkIfOrderNeedsToBeRemoved(newOrder)
+
+	if index := c.checkIfOrderAlreadyExists(newOrder); index > -1 {
+		c.updateExistingOrder(newOrder, index, removalRequired)
+		return
+	}
+
+	if !removalRequired {
+		c.insertNewOrder(newOrder)
+		return
+	}
+
+}
+
+// This function should only be called from handleOrderUpdateFromStream because of mutex synchronizations
+func (c *Client) checkIfOrderAlreadyExists(newOrder *order) int {
+	indexOfOrder := -1
+
+	for i := range c.openOrders {
+		if c.openOrders[i].Id == newOrder.Id {
+			return i
+		}
+	}
+
+	return indexOfOrder
+}
+
+// This function should only be called from handleOrderUpdateFromStream because of mutex synchronizations
+func (c *Client) updateExistingOrder(newOrder *order, existingOrderIndex int, isRemovalRequired bool) {
+	c.openOrders[existingOrderIndex] = newOrder
+
+	if isRemovalRequired {
+		c.openOrders = append(c.openOrders[:existingOrderIndex], c.openOrders[existingOrderIndex+1:]...)
+	}
+
+}
+
+// This function should only be called from handleOrderUpdateFromStream because of mutex synchronizations
+func (c *Client) checkIfOrderNeedsToBeRemoved(newOrder *order) bool {
+	if newOrder.RemainingSize == 0 || newOrder.Type == "market" || newOrder.Status == "closed" {
+		return true
+	}
+	return false
+}
+
+// This function should only be called from handleOrderUpdateFromStream because of mutex synchronizations
+func (c *Client) insertNewOrder(newOrder *order) {
+	c.openOrders = append(c.openOrders, newOrder)
+}
+
+///////////////////////// END --> STREAM ORDER FUNCTIONALITIES /////////////////////////

@@ -173,6 +173,7 @@ func (c *Client) handleWebSocketData(data []byte, channel string) {
 		err := json.Unmarshal(data, newOrderUpdate)
 		c.unhandledError(err)
 		fmt.Println("New Order Detected!")
+		c.handleOrderUpdateFromStream(newOrderUpdate)
 	case "fills":
 		newFillUpdate := new(websocket.FillsData)
 		err := json.Unmarshal(data, newFillUpdate)
