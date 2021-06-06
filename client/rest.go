@@ -55,8 +55,8 @@ func (c *Client) getAllOpenOrders() *orders.ResponseForOpenOrder {
 }
 
 func (c *Client) restError(err error) {
-	c.restart()
 	if err != nil {
+		c.restart()
 		panic(err)
 	}
 }

@@ -29,11 +29,6 @@ func connect(host string) (*websocket.Conn, error) {
 }
 
 func (ws *WSConnection) readFromWSToChannel(chReadWS chan<- []byte) {
-	fmt.Println("Read from WS started")
-
-	defer func() {
-		fmt.Println("Read from ws closed  ", time.Now())
-	}()
 	for {
 		_, message, err := ws.Conn.ReadMessage()
 
@@ -73,12 +68,6 @@ func (ws *WSConnection) getAuthMessage() *wsAuthorizationMessage {
 }
 
 func (ws *WSConnection) pingPong() {
-	fmt.Println("ping pong started")
-
-	defer func() {
-		fmt.Println("ping pong closed  ", time.Now())
-	}()
-
 	ticker := time.NewTicker(constants.PingPeriod)
 	defer ticker.Stop()
 

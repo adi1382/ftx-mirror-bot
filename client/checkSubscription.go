@@ -114,6 +114,7 @@ func (c *Client) checkIfStreamsAreSuccessfullySubscribed(channelsToSubscribe []s
 		}
 
 		if time.Now().Unix()-startTime > int64(timeout/time.Second) {
+			fmt.Printf("Unable to verify subscriptions for channels %v\n", channelsToSubscribe)
 			c.restart()
 			return
 		}

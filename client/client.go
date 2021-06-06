@@ -1,7 +1,6 @@
 package client
 
 import (
-	"fmt"
 	"github.com/adi1382/ftx-mirror-bot/constants"
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/auth"
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/rest"
@@ -65,9 +64,7 @@ func (c *Client) Initialize() {
 
 	c.wsConnection.AuthenticateWebsocketConnection()
 	c.wsConnection.SubscribeToPrivateStreams()
-	fmt.Println("Get")
 	c.checkIfStreamsAreSuccessfullySubscribed([]string{"fills", "orders"}, constants.TimeoutToCheckForSubscriptions)
-	fmt.Println("dooooone")
 	if !c.runningStatus() {
 		return
 	}
