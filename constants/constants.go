@@ -13,3 +13,5 @@ const PositionsInitializingCoolDown = 15 * time.Second
 
 // TimeoutToCheckForSubscriptions Timeout to check if channels are subscribed else restart
 const TimeoutToCheckForSubscriptions = 15 * time.Second
+
+const ConfigPath = "config/config.json"

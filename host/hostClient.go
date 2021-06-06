@@ -1,8 +1,9 @@
 package host
 
 import (
-	"github.com/adi1382/ftx-mirror-bot/client"
 	"sync"
+
+	"github.com/adi1382/ftx-mirror-bot/client"
 )
 
 func NewHostClient(apiKey, apiSecret string, subRoutineCloser chan int, wg *sync.WaitGroup) *Host {

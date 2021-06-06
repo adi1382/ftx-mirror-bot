@@ -1,12 +1,17 @@
 package sub
 
 import (
+	"sync"
+
 	"github.com/adi1382/ftx-mirror-bot/client"
 	"github.com/adi1382/ftx-mirror-bot/host"
-	"sync"
 )
 
-func NewSubClient(apiKey, apiSecret string, subRoutineCloser chan int, wg *sync.WaitGroup, host *host.Host) *Sub {
+func NewSubClient(
+	apiKey, apiSecret string,
+	subRoutineCloser chan int,
+	wg *sync.WaitGroup,
+	host *host.Host) *Sub {
 	c := Sub{
 		client: client.NewClient(apiKey, apiSecret, subRoutineCloser, wg), hostClient: host,
 	}
