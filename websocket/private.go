@@ -29,7 +29,11 @@ func connect(host string) (*websocket.Conn, error) {
 	return conn, err
 }
 
+// This function is called as a go routine
 func (ws *WSConnection) readFromWSToChannel(chReadWS chan<- []byte) {
+	defer func() {
+		ws.wg.Done()
+	}()
 	for {
 		_, message, err := ws.Conn.ReadMessage()
 
@@ -70,7 +74,11 @@ func (ws *WSConnection) getAuthMessage() *wsAuthorizationMessage {
 	return &wsAuthorizationMessage{"login", args}
 }
 
+// This function is called as a go routine
 func (ws *WSConnection) pingPong() {
+	defer func() {
+		ws.wg.Done()
+	}()
 	ticker := time.NewTicker(constants.PingPeriod)
 	defer ticker.Stop()
 

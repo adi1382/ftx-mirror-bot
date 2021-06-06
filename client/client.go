@@ -3,21 +3,18 @@ package client
 import (
 	"sync"
 
-	"github.com/adi1382/ftx-mirror-bot/constants"
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/auth"
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/rest"
 	"github.com/adi1382/ftx-mirror-bot/websocket"
 	"go.uber.org/atomic"
 )
 
-func NewClient(apiKey, secret string, isRestartRequired *atomic.Bool) *Client {
-
+func NewClient(apiKey, secret string, subRoutineCloser chan int, wg *sync.WaitGroup) *Client {
 	c := Client{apiKey: apiKey}
 	c.rest = rest.New(auth.New(apiKey, secret))
-	c.isRestartRequired = isRestartRequired
-	c.updateSymbolInfo()
-	c.subRoutineCloser = make(chan int, 1)
-	c.wsConnection = websocket.NewSocketConnection(apiKey, secret, isRestartRequired, c.subRoutineCloser)
+	c.subRoutineCloser = subRoutineCloser
+	c.wg = wg
+	c.wsConnection = websocket.NewSocketConnection(apiKey, secret, c.subRoutineCloser, c.wg)
 	c.userStream = make(chan []byte, 100)
 	c.running.Store(true)
 	return &c
@@ -27,6 +24,7 @@ type Client struct {
 	apiKey                        string
 	rest                          *rest.Client
 	symbolsInfo                   map[string]symbolInfo
+	symbolInfoLock                sync.Mutex
 	wsConnection                  *websocket.WSConnection
 	userStream                    chan []byte
 	subscriptionsToUserStream     []chan []byte //is subscribed by subAccounts to hostAccounts
@@ -50,30 +48,12 @@ type Client struct {
 	isInitializationCompleted     atomic.Bool
 	lastBalanceUpdateTimeUnix     atomic.Int64
 	nextBalanceUpdateTimeUnix     atomic.Int64
-	//fillsForPositionInitialization *fills.Response // not needed, only last fill unix could be used to remove unnecessary fills through stream
-
 }
 
-//func SubscribeToClientStream(c *Client, ch chan []byte) {
-//	c.subscriptionsToUserStreamLock.Lock()
-//	c.subscriptionsToUserStream = append(c.subscriptionsToUserStream, ch)
-//	c.subscriptionsToUserStreamLock.Unlock()
-//}
-
-func (c *Client) Initialize() {
-	c.wsConnection.Connect(c.userStream)
-
-	c.wsConnection.AuthenticateWebsocketConnection()
-	c.wsConnection.SubscribeToPrivateStreams()
-	c.checkIfStreamsAreSuccessfullySubscribed([]string{"fills", "orders"}, constants.TimeoutToCheckForSubscriptions)
-	if !c.runningStatus() {
-		return
-	}
-
-	c.initializeAccountInfoAndPositions()
-	c.initializeOrders()
-
-	go c.receiveStreamingData()
+func SubscribeToClientStream(c *Client, ch chan []byte) {
+	c.subscriptionsToUserStreamLock.Lock()
+	c.subscriptionsToUserStream = append(c.subscriptionsToUserStream, ch)
+	c.subscriptionsToUserStreamLock.Unlock()
 }
 
 func (c *Client) runningStatus() bool {
@@ -82,7 +62,6 @@ func (c *Client) runningStatus() bool {
 
 func (c *Client) restart() {
 	c.subRoutineCloser <- 0
-	c.isRestartRequired.Store(true)
 	c.running.Store(false)
 }
 
@@ -100,29 +79,3 @@ func (c *Client) restart() {
 //		}
 //	}
 //}
-
-func (c *Client) ActiveOrders() []Order {
-	c.openOrdersLock.Lock()
-	defer c.openOrdersLock.Unlock()
-
-	openOrders := make([]Order, 0, 5)
-	for i := range c.openOrders {
-		openOrders = append(openOrders, *c.openOrders[i])
-	}
-
-	return openOrders
-
-}
-
-func (c *Client) ActivePositions() []Position {
-	c.openPositionsLock.Lock()
-	defer c.openPositionsLock.Unlock()
-
-	openPositions := make([]Position, 0, 5)
-	for i := range c.openPositions {
-		openPositions = append(openPositions, *c.openPositions[i])
-	}
-
-	return openPositions
-
-}

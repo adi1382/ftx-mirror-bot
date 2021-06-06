@@ -1,20 +1,34 @@
 package main
 
 import (
+	"fmt"
 	"github.com/adi1382/ftx-mirror-bot/client"
-	"go.uber.org/atomic"
+	"sync"
+	"time"
 )
 
-var isRestartRequired *atomic.Bool
+var (
+	subRoutineCloser chan int
+	wg               sync.WaitGroup
+)
 
 func init() {
-	isRestartRequired = atomic.NewBool(false)
+	subRoutineCloser = make(chan int, 100)
 }
 
 func main() {
-	hostClient := client.NewClient("kqAyKxRHgQreYe4iNLB7qnpSp1zQsjQP2ePFUDjq", "PhqPf5qpoCp7aFjYC4Ua5ZJTAHuBP20P0TwyZvOX", isRestartRequired)
+	hostClient := client.NewClient("kqAyKxRHgQreYe4iNLB7qnpSp1zQsjQP2ePFUDjq", "PhqPf5qpoCp7aFjYC4Ua5ZJTAHuBP20P0TwyZvOX", subRoutineCloser, &wg)
 
 	hostClient.Initialize()
+
+	go func() {
+		time.Sleep(time.Minute)
+		fmt.Println("Attemptingggg")
+		subRoutineCloser <- 0
+	}()
+
+	wg.Wait()
+	fmt.Println("wait group completed")
 
 	//n := 0
 

@@ -4,20 +4,19 @@ import (
 	"sync"
 
 	"github.com/gorilla/websocket"
-	"go.uber.org/atomic"
 )
 
 type WSConnection struct {
-	Conn              *websocket.Conn
-	wsWriteLock       sync.Mutex
-	isRestartRequired *atomic.Bool
-	key               string
-	secret            string
-	subRoutineCloser  chan int
+	Conn             *websocket.Conn
+	wsWriteLock      sync.Mutex
+	key              string
+	secret           string
+	subRoutineCloser chan int
+	wg               *sync.WaitGroup
 }
 
-func NewSocketConnection(key, secret string, restartCounter *atomic.Bool, subRoutineCloser chan int) *WSConnection {
-	ws := WSConnection{key: key, secret: secret, isRestartRequired: restartCounter, subRoutineCloser: subRoutineCloser}
+func NewSocketConnection(key, secret string, subRoutineCloser chan int, wg *sync.WaitGroup) *WSConnection {
+	ws := WSConnection{key: key, secret: secret, subRoutineCloser: subRoutineCloser, wg: wg}
 	return &ws
 }
 
@@ -28,6 +27,7 @@ func (ws *WSConnection) Connect(chReadWS chan<- []byte) {
 	}
 	ws.Conn = conn
 
+	ws.wg.Add(2)
 	go ws.pingPong()
 	go ws.readFromWSToChannel(chReadWS)
 }

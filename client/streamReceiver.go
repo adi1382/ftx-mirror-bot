@@ -6,7 +6,11 @@ import (
 	"github.com/adi1382/ftx-mirror-bot/websocket"
 )
 
+// This function is called as a sub routine
 func (c *Client) receiveStreamingData() {
+	defer func() {
+		c.wg.Done()
+	}()
 	for {
 		msg := <-c.userStream
 		c.sendMessageToSubscriptions(msg) //This is used only for host accounts
@@ -41,7 +45,6 @@ func (c *Client) sendMessageToSubscriptions(msg []byte) {
 
 func (c *Client) checkQuitStream(msg []byte) bool {
 	if string(msg) == "quit" {
-		c.isRestartRequired.Store(true)
 		return true
 	}
 	return false

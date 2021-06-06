@@ -108,7 +108,7 @@ func (c *Client) handleFillUpdateFromStream(newFill *websocket.FillsData) {
 	if val, ok := c.symbolsInfo[newFill.Market]; !ok {
 		return
 	} else {
-		if val.marketType == "spot" {
+		if val.MarketType == "spot" {
 			return
 		}
 	}
