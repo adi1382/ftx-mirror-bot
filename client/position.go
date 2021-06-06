@@ -29,6 +29,10 @@ func (c *Client) initializeAccountInfoAndPositions() {
 
 	accountInformation := c.fetchAccountInformationAndUpdateLastFillTime()
 
+	if accountInformation == nil {
+		return
+	}
+
 	c.leverage.Store(accountInformation.Leverage)
 	c.totalCollateral.Store(accountInformation.Collateral)
 
@@ -50,8 +54,15 @@ func (c *Client) fetchAccountInformationAndUpdateLastFillTime() *account.Respons
 	for {
 		accountInformationRestCallTime := time.Now().Unix()
 		accountInformation := c.getAccountInformation()
+		if accountInformation == nil {
+			return nil
+		}
 		fillsResponse := c.getFills(constants.PositionsInitializingCoolDown)
+		if fillsResponse == nil {
+			return accountInformation
+		}
 		if c.areAnyFillsAfterAccountInformationCall(fillsResponse, accountInformationRestCallTime) {
+			time.Sleep(time.Second)
 			continue
 		}
 		return accountInformation

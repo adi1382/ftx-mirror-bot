@@ -10,10 +10,11 @@ type WSConnection struct {
 	isRestartRequired *atomic.Bool
 	key               string
 	secret            string
+	subRoutineCloser  chan int
 }
 
-func NewSocketConnection(key, secret string, restartCounter *atomic.Bool) WSConnection {
-	ws := WSConnection{key: key, secret: secret, isRestartRequired: restartCounter}
+func NewSocketConnection(key, secret string, restartCounter *atomic.Bool, subRoutineCloser chan int) WSConnection {
+	ws := WSConnection{key: key, secret: secret, isRestartRequired: restartCounter, subRoutineCloser: subRoutineCloser}
 	return ws
 }
 

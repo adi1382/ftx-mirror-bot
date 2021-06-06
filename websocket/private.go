@@ -24,12 +24,16 @@ type wsAuthorizationMessage struct {
 
 func connect(host string) (*websocket.Conn, error) {
 	u := url.URL{Scheme: "wss", Host: host, Path: "/ws/"}
-	fmt.Println(u.String())
 	conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	return conn, err
 }
 
 func (ws *WSConnection) readFromWSToChannel(chReadWS chan<- []byte) {
+	fmt.Println("Read from WS started")
+
+	defer func() {
+		fmt.Println("Read from ws closed  ", time.Now())
+	}()
 	for {
 		_, message, err := ws.Conn.ReadMessage()
 
@@ -69,6 +73,12 @@ func (ws *WSConnection) getAuthMessage() *wsAuthorizationMessage {
 }
 
 func (ws *WSConnection) pingPong() {
+	fmt.Println("ping pong started")
+
+	defer func() {
+		fmt.Println("ping pong closed  ", time.Now())
+	}()
+
 	ticker := time.NewTicker(constants.PingPeriod)
 	defer ticker.Stop()
 
@@ -82,31 +92,29 @@ func (ws *WSConnection) pingPong() {
 				ws.websocketError(err)
 				return
 			}
+		case c := <-ws.subRoutineCloser:
+			ws.subRoutineCloser <- c + 1
+			_ = ws.Conn.Close()
+			return
 
-		default:
-			if ws.isRestartRequired.Load() {
-				return
-			}
 		}
-
-		time.Sleep(time.Millisecond)
 	}
 }
 
 func (ws *WSConnection) websocketError(err error) {
-	panic(err)
+	fmt.Println(err)
 }
 
-func (ws *WSConnection) closeOnRestart() {
-	for {
-		if ws.isRestartRequired.Load() {
-			err := ws.Conn.Close()
-
-			if err != nil {
-				return
-			}
-		}
-
-		time.Sleep(time.Millisecond)
-	}
-}
+//func (ws *WSConnection) closeOnRestart() {
+//	for {
+//		if ws.isRestartRequired.Load() {
+//			err := ws.Conn.Close()
+//
+//			if err != nil {
+//				return
+//			}
+//		}
+//
+//		time.Sleep(time.Millisecond)
+//	}
+//}

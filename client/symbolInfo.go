@@ -16,6 +16,11 @@ func (c *Client) updateSymbolInfo() {
 
 func (c *Client) updateSymbolInfoForFutures() {
 	futuresResponse := c.getAllFuturesList()
+
+	if futuresResponse == nil {
+		return
+	}
+
 	for i := range *futuresResponse {
 		c.symbolsInfo[(*futuresResponse)[i].Name] = symbolInfo{
 			symbol:         (*futuresResponse)[i].Name,
@@ -29,6 +34,11 @@ func (c *Client) updateSymbolInfoForFutures() {
 
 func (c *Client) updateSymbolInfoForSpot() {
 	marketResponse := c.getAllMarkets()
+
+	if marketResponse == nil {
+		return
+	}
+
 	for i := range *marketResponse {
 		if (*marketResponse)[i].Type == "spot" {
 			c.symbolsInfo[(*marketResponse)[i].Name] = symbolInfo{

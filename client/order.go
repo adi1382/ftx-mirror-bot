@@ -28,7 +28,9 @@ func (c *Client) initializeOrders() {
 	c.openOrdersLock.Unlock()
 
 	openOrders := c.getAllOpenOrders()
-
+	if openOrders == nil {
+		return
+	}
 	c.generateNativeOrdersFromRestResponse(openOrders)
 }
 

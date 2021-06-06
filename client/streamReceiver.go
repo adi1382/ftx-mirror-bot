@@ -2,9 +2,7 @@ package client
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/adi1382/ftx-mirror-bot/websocket"
-	"time"
 )
 
 func (c *Client) receiveStreamingData() {
@@ -46,109 +44,6 @@ func (c *Client) checkQuitStream(msg []byte) bool {
 		return true
 	}
 	return false
-}
-
-func (c *Client) pushChannelToTheTopOfUserStream(tempChannel chan []byte) {
-	if len(c.userStream) > 0 {
-		for {
-			tempChannel <- <-c.userStream
-			if len(c.userStream) == 0 {
-				break
-			}
-		}
-	}
-
-	n := len(tempChannel)
-	for {
-		c.userStream <- <-tempChannel
-		if len(tempChannel) == 0 {
-			if len(c.userStream) == n {
-				return
-			} else {
-				c.restart()
-				return
-			}
-		}
-	}
-}
-
-func (c *Client) getMessagesFromChannelWithoutModifyingUserStream(minChannelLength int) []string {
-	startTimeUnix := time.Now().Unix()
-	rawMessages := make([][]byte, 0, 2)
-	messages := make([]string, 0, 2)
-	tempChannel := make(chan []byte, 100)
-
-	for {
-		if len(c.userStream) >= minChannelLength {
-			for {
-				tempChannel <- <-c.userStream
-				if len(c.userStream) == 0 {
-					break
-				}
-			}
-
-			for {
-				rawMessages = append(rawMessages, <-tempChannel)
-				if len(tempChannel) == 0 {
-					break
-				}
-			}
-
-			for i := range rawMessages {
-				tempChannel <- rawMessages[i]
-			}
-
-			for i := range rawMessages {
-				messages = append(messages, string(rawMessages[i]))
-			}
-
-			c.pushChannelToTheTopOfUserStream(tempChannel)
-
-			return messages
-		}
-
-		if time.Now().Unix()-startTimeUnix > 15 {
-			fmt.Println("Didn't received subscribed message in 15 seconds. Trying to restart...")
-			c.restart()
-			return nil
-		}
-	}
-}
-
-func (c *Client) checkIfStreamsAreSuccessfullySubscribed(channels ...string) {
-	noOfChannelsToCheck := len(channels)
-	noOfChannelsSubscribed := 0
-	messagesToFind := make([]string, 0, 2)
-	startTime := time.Now().Unix()
-
-	for i := range channels {
-		messagesToFind = append(messagesToFind, fmt.Sprintf(`{"type": "subscribed", "channel": "%s"}`, channels[i]))
-	}
-
-	for {
-		messages := c.getMessagesFromChannelWithoutModifyingUserStream(noOfChannelsToCheck)
-
-		for i := range messagesToFind {
-			for j := range messages {
-				if messagesToFind[i] == messages[j] {
-					noOfChannelsSubscribed++
-					break
-				}
-			}
-		}
-
-		if noOfChannelsSubscribed == noOfChannelsToCheck {
-			return
-		} else {
-			noOfChannelsSubscribed = 0
-		}
-
-		if time.Now().Unix()-startTime > 15 {
-			c.restart()
-			return
-		}
-		time.Sleep(time.Millisecond)
-	}
 }
 
 func (c *Client) checkIfWSDataNil(data interface{}) bool {

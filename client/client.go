@@ -1,12 +1,13 @@
 package client
 
 import (
+	"fmt"
+	"github.com/adi1382/ftx-mirror-bot/constants"
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/auth"
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/rest"
 	"github.com/adi1382/ftx-mirror-bot/websocket"
 	"go.uber.org/atomic"
 	"sync"
-	"time"
 )
 
 func NewClient(apiKey, secret string, isRestartRequired *atomic.Bool) *Client {
@@ -15,14 +16,14 @@ func NewClient(apiKey, secret string, isRestartRequired *atomic.Bool) *Client {
 	c.rest = rest.New(auth.New(apiKey, secret))
 	c.isRestartRequired = isRestartRequired
 	c.updateSymbolInfo()
-	c.wsConnection = websocket.NewSocketConnection(apiKey, secret, isRestartRequired)
+	c.subRoutineCloser = make(chan int, 1)
+	c.wsConnection = websocket.NewSocketConnection(apiKey, secret, isRestartRequired, c.subRoutineCloser)
 	c.userStream = make(chan []byte, 100)
 	c.running.Store(true)
 	return &c
 }
 
 type Client struct {
-	typeOfAccount                 string
 	apiKey                        string
 	rest                          *rest.Client
 	symbolsInfo                   map[string]symbolInfo
@@ -35,21 +36,22 @@ type Client struct {
 	totalCollateral               atomic.Float64
 	running                       atomic.Bool
 	isPositionCoolDownPeriod      atomic.Bool
+	subRoutineCloser              chan int // Pass 1 to close all sub routines
+	wg                            *sync.WaitGroup
+	lastFillUnixTime              int64
+	symbolTickers                 map[string]float64
+	symbolTickerLock              sync.Mutex
+	symbolTickerLastUpdated       atomic.Int64
+	openOrders                    []*order
+	openPositions                 []*position
+	openOrdersLock                sync.Mutex
+	openPositionsLock             sync.Mutex
+	balanceUpdateRate             float64 // Applied till here
+	isInitializationCompleted     atomic.Bool
+	lastBalanceUpdateTimeUnix     atomic.Int64
+	nextBalanceUpdateTimeUnix     atomic.Int64
 	//fillsForPositionInitialization *fills.Response // not needed, only last fill unix could be used to remove unnecessary fills through stream
-	lastFillUnixTime          int64 // Applied till here
-	balanceUpdateRate         float64
-	symbolTickers             map[string]float64
-	symbolTickerLock          sync.Mutex
-	symbolTickerLastUpdated   atomic.Int64
-	openOrders                []*order
-	openPositions             []*position
-	openOrdersLock            sync.Mutex
-	openPositionsLock         sync.Mutex
-	isInitializationCompleted atomic.Bool
-	lastBalanceUpdateTimeUnix atomic.Int64
-	nextBalanceUpdateTimeUnix atomic.Int64
-	listenKeyLastUpdated      atomic.Int64 // This is still required to be fully implemented
-	wg                        *sync.WaitGroup
+
 }
 
 //func SubscribeToClientStream(c *Client, ch chan []byte) {
@@ -63,7 +65,9 @@ func (c *Client) Initialize() {
 
 	c.wsConnection.AuthenticateWebsocketConnection()
 	c.wsConnection.SubscribeToPrivateStreams()
-	c.checkIfStreamsAreSuccessfullySubscribed("fills", "orders")
+	fmt.Println("Get")
+	c.checkIfStreamsAreSuccessfullySubscribed([]string{"fills", "orders"}, constants.TimeoutToCheckForSubscriptions)
+	fmt.Println("dooooone")
 	if !c.runningStatus() {
 		return
 	}
@@ -79,24 +83,25 @@ func (c *Client) runningStatus() bool {
 }
 
 func (c *Client) restart() {
+	c.subRoutineCloser <- 0
 	c.isRestartRequired.Store(true)
 	c.running.Store(false)
 }
 
-func (c *Client) checkForRestart() {
-
-	for {
-		time.Sleep(time.Millisecond)
-		if c.isRestartRequired.Load() {
-			c.restart()
-			return
-		}
-
-		if !c.runningStatus() {
-			return
-		}
-	}
-}
+//func (c *Client) checkForRestart() {
+//
+//	for {
+//		time.Sleep(time.Millisecond)
+//		if c.isRestartRequired.Load() {
+//			c.restart()
+//			return
+//		}
+//
+//		if !c.runningStatus() {
+//			return
+//		}
+//	}
+//}
 
 func (c *Client) ActiveOrders() []order {
 	c.openOrdersLock.Lock()

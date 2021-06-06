@@ -10,3 +10,6 @@ const PongWait = 20 * time.Second
 
 // PositionsInitializingCoolDown Time for which fills are requested to prevent contradiction with fill ws channel
 const PositionsInitializingCoolDown = 15 * time.Second
+
+// TimeoutToCheckForSubscriptions Timeout to check if channels are subscribed else restart
+const TimeoutToCheckForSubscriptions = 15 * time.Second
