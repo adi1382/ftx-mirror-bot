@@ -37,10 +37,10 @@ func (h *Host) FetchTotalCollateral() float64 {
 	return h.FetchTotalCollateral()
 }
 
-func (h *Host) FetchSymbolInformation() {
-
+func (h *Host) FetchSymbolInformation() map[string]client.SymbolInfo {
+	return h.client.FetchSymbolInformation()
 }
 
 func (h *Host) SubscribeToHostUpdates(ch chan []byte) {
-	client.SubscribeToClientStream(h.client, ch)
+	h.client.SubscribeToClientStream(ch)
 }

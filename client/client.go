@@ -23,7 +23,7 @@ func NewClient(apiKey, secret string, subRoutineCloser chan int, wg *sync.WaitGr
 type Client struct {
 	apiKey                        string
 	rest                          *rest.Client
-	symbolsInfo                   map[string]symbolInfo
+	symbolsInfo                   map[string]SymbolInfo
 	symbolInfoLock                sync.Mutex
 	wsConnection                  *websocket.WSConnection
 	userStream                    chan []byte
@@ -48,12 +48,6 @@ type Client struct {
 	isInitializationCompleted     atomic.Bool
 	lastBalanceUpdateTimeUnix     atomic.Int64
 	nextBalanceUpdateTimeUnix     atomic.Int64
-}
-
-func SubscribeToClientStream(c *Client, ch chan []byte) {
-	c.subscriptionsToUserStreamLock.Lock()
-	c.subscriptionsToUserStream = append(c.subscriptionsToUserStream, ch)
-	c.subscriptionsToUserStreamLock.Unlock()
 }
 
 func (c *Client) runningStatus() bool {

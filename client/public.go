@@ -49,22 +49,29 @@ func (c *Client) FetchTotalCollateral() float64 {
 	return c.totalCollateral.Load()
 }
 
+// SubscribeToClientStream is only called for host account
+func (c *Client) SubscribeToClientStream(ch chan []byte) {
+	c.subscriptionsToUserStreamLock.Lock()
+	c.subscriptionsToUserStream = append(c.subscriptionsToUserStream, ch)
+	c.subscriptionsToUserStreamLock.Unlock()
+}
+
 // UpdateSymbolInfoViaRest is only called for host account
 func (c *Client) UpdateSymbolInfoViaRest() {
 	c.symbolInfoLock.Lock()
 	defer c.symbolInfoLock.Unlock()
 
-	c.symbolsInfo = make(map[string]symbolInfo, 1000)
+	c.symbolsInfo = make(map[string]SymbolInfo, 1000)
 	c.updateSymbolInfoForFutures()
 	c.updateSymbolInfoForSpot()
 }
 
 // FetchSymbolInformation is only called for host account
-func (c *Client) FetchSymbolInformation() map[string]symbolInfo {
+func (c *Client) FetchSymbolInformation() map[string]SymbolInfo {
 	c.symbolInfoLock.Lock()
 	defer c.symbolInfoLock.Unlock()
 
-	symbolInformation := make(map[string]symbolInfo, 1000)
+	symbolInformation := make(map[string]SymbolInfo, 1000)
 	for k, v := range c.symbolsInfo {
 		symbolInformation[k] = v
 	}
@@ -72,11 +79,11 @@ func (c *Client) FetchSymbolInformation() map[string]symbolInfo {
 }
 
 // SetSymbolInformation is only called for sub account
-func (c *Client) SetSymbolInformation(symbolInformation map[string]symbolInfo) {
+func (c *Client) SetSymbolInformation(symbolInformation map[string]SymbolInfo) {
 	c.symbolInfoLock.Lock()
 	defer c.symbolInfoLock.Unlock()
 
-	c.symbolsInfo = make(map[string]symbolInfo, 1000)
+	c.symbolsInfo = make(map[string]SymbolInfo, 1000)
 
 	for k, v := range symbolInformation {
 		c.symbolsInfo[k] = v

@@ -1,6 +1,6 @@
 package client
 
-type symbolInfo struct {
+type SymbolInfo struct {
 	Symbol         string
 	Enabled        bool
 	PriceIncrement float64
@@ -16,7 +16,7 @@ func (c *Client) updateSymbolInfoForFutures() {
 	}
 
 	for i := range *futuresResponse {
-		c.symbolsInfo[(*futuresResponse)[i].Name] = symbolInfo{
+		c.symbolsInfo[(*futuresResponse)[i].Name] = SymbolInfo{
 			Symbol:         (*futuresResponse)[i].Name,
 			Enabled:        (*futuresResponse)[i].Enabled,
 			PriceIncrement: (*futuresResponse)[i].PriceIncrement,
@@ -35,7 +35,7 @@ func (c *Client) updateSymbolInfoForSpot() {
 
 	for i := range *marketResponse {
 		if (*marketResponse)[i].Type == "spot" {
-			c.symbolsInfo[(*marketResponse)[i].Name] = symbolInfo{
+			c.symbolsInfo[(*marketResponse)[i].Name] = SymbolInfo{
 				Symbol:         (*marketResponse)[i].Name,
 				Enabled:        (*marketResponse)[i].Enabled,
 				PriceIncrement: (*marketResponse)[i].PriceIncrement,
