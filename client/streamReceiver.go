@@ -7,7 +7,7 @@ import (
 )
 
 // This function is called as a sub routine
-func (c *Client) receiveStreamingData() {
+func (c *client) receiveStreamingData() {
 	defer func() {
 		c.wg.Done()
 	}()
@@ -33,7 +33,7 @@ func (c *Client) receiveStreamingData() {
 	}
 }
 
-func (c *Client) sendMessageToSubscriptions(msg []byte) {
+func (c *client) sendMessageToSubscriptions(msg []byte) {
 	if len(c.subscriptionsToUserStream) > 0 {
 		c.subscriptionsToUserStreamLock.Lock()
 		for i := range c.subscriptionsToUserStream {
@@ -43,30 +43,10 @@ func (c *Client) sendMessageToSubscriptions(msg []byte) {
 	}
 }
 
-func (c *Client) checkQuitStream(msg []byte) bool {
-	if string(msg) == "quit" {
-		return true
-	}
-	return false
-}
-
-func (c *Client) checkIfWSDataNil(data interface{}) bool {
-	if data == nil {
-		return true
-	}
-	return false
-}
-
-func (c *Client) unhandledError(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
-
-func (c *Client) handleWebSocketData(data []byte, channel string) {
+func (c *client) handleWebSocketData(data []byte, channel string) {
 	switch channel {
 	case "orders":
-		newOrderUpdate := new(Order)
+		newOrderUpdate := new(order)
 		err := json.Unmarshal(data, newOrderUpdate)
 		c.unhandledError(err)
 		c.handleOrderUpdateFromStream(newOrderUpdate)
@@ -75,5 +55,25 @@ func (c *Client) handleWebSocketData(data []byte, channel string) {
 		err := json.Unmarshal(data, newFillUpdate)
 		c.unhandledError(err)
 		c.handleFillUpdateFromStream(newFillUpdate)
+	}
+}
+
+func (c *client) checkIfWSDataNil(data interface{}) bool {
+	if data == nil {
+		return true
+	}
+	return false
+}
+
+func (c *client) checkQuitStream(msg []byte) bool {
+	if string(msg) == "quit" {
+		return true
+	}
+	return false
+}
+
+func (c *client) unhandledError(err error) {
+	if err != nil {
+		panic(err)
 	}
 }

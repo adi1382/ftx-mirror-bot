@@ -1,20 +1,18 @@
-package host
+package client
 
 import (
 	"sync"
-
-	"github.com/adi1382/ftx-mirror-bot/client"
 )
 
 func NewHostClient(apiKey, apiSecret string, subRoutineCloser chan int, wg *sync.WaitGroup) *Host {
 	c := Host{
-		client: client.NewClient(apiKey, apiSecret, subRoutineCloser, wg),
+		client: newClient(apiKey, apiSecret, subRoutineCloser, wg),
 	}
 	return &c
 }
 
 type Host struct {
-	client *client.Client
+	client *client
 }
 
 func (h *Host) Initialize() {
@@ -22,11 +20,11 @@ func (h *Host) Initialize() {
 	h.client.Initialize()
 }
 
-func (h *Host) FetchOpenOrders() []client.Order {
+func (h *Host) FetchOpenOrders() []order {
 	return h.client.ActiveOrders()
 }
 
-func (h *Host) FetchOpenPositions() []client.Position {
+func (h *Host) FetchOpenPositions() []position {
 	return h.client.ActivePositions()
 }
 
@@ -38,7 +36,7 @@ func (h *Host) FetchTotalCollateral() float64 {
 	return h.FetchTotalCollateral()
 }
 
-func (h *Host) FetchSymbolInformation() map[string]client.SymbolInfo {
+func (h *Host) FetchSymbolInformation() map[string]symbolInfo {
 	return h.client.FetchSymbolInformation()
 }
 

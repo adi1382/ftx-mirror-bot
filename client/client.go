@@ -9,8 +9,8 @@ import (
 	"go.uber.org/atomic"
 )
 
-func NewClient(apiKey, secret string, subRoutineCloser chan int, wg *sync.WaitGroup) *Client {
-	c := Client{apiKey: apiKey}
+func newClient(apiKey, secret string, subRoutineCloser chan int, wg *sync.WaitGroup) *client {
+	c := client{apiKey: apiKey}
 	c.rest = rest.New(auth.New(apiKey, secret))
 	c.subRoutineCloser = subRoutineCloser
 	c.wg = wg
@@ -20,46 +20,50 @@ func NewClient(apiKey, secret string, subRoutineCloser chan int, wg *sync.WaitGr
 	return &c
 }
 
-type Client struct {
-	apiKey                        string
-	rest                          *rest.Client
-	symbolsInfo                   map[string]SymbolInfo
-	symbolInfoLock                sync.Mutex
-	wsConnection                  *websocket.WSConnection
-	userStream                    chan []byte
-	subscriptionsToUserStream     []chan []byte //is subscribed by subAccounts to hostAccounts
-	subscriptionsToUserStreamLock sync.Mutex
-	isRestartRequired             *atomic.Bool
-	leverage                      atomic.Float64
-	totalCollateral               atomic.Float64
-	running                       atomic.Bool
-	isPositionCoolDownPeriod      atomic.Bool
-	subRoutineCloser              chan int // Pass 1 to close all sub routines
-	wg                            *sync.WaitGroup
-	lastFillUnixTime              int64
-	symbolTickers                 map[string]float64
-	symbolTickerLock              sync.Mutex
-	symbolTickerLastUpdated       atomic.Int64
-	openOrders                    []*Order
-	openPositions                 []*Position
-	openOrdersLock                sync.Mutex
-	openPositionsLock             sync.Mutex
-	balanceUpdateRate             float64 // Applied till here
-	isInitializationCompleted     atomic.Bool
-	lastBalanceUpdateTimeUnix     atomic.Int64
-	nextBalanceUpdateTimeUnix     atomic.Int64
+type client struct {
+	apiKey                             string
+	rest                               *rest.Client
+	symbolsInfo                        map[string]symbolInfo
+	symbolInfoLock                     sync.Mutex
+	wsConnection                       *websocket.WSConnection
+	userStream                         chan []byte
+	subscriptionsToUserStream          []chan []byte //is subscribed by subAccounts to hostAccounts
+	subscriptionsToUserStreamLock      sync.Mutex
+	isRestartRequired                  *atomic.Bool
+	leverage                           atomic.Float64
+	totalCollateral                    atomic.Float64
+	running                            atomic.Bool
+	isPositionCoolDownPeriod           atomic.Bool
+	subRoutineCloser                   chan int //Pass 1 to close all sub routines
+	wg                                 *sync.WaitGroup
+	lastFillUnixTime                   int64
+	symbolTickers                      map[string]float64
+	symbolTickerLock                   sync.Mutex
+	symbolTickerLastUpdated            atomic.Int64
+	openOrders                         []*order
+	openPositions                      []*position
+	openOrdersLock                     sync.Mutex
+	openPositionsLock                  sync.Mutex //Applied till here
+	leverageUpdateDuration             int64
+	balanceUpdateDuration              int64
+	lastAccountInformationCallTimeUnix int64
+	calibrationDuration                int64   //only for sub account
+	isCopyLeverage                     bool    //only for sub account
+	isBalanceProportional              bool    //only for sub account
+	fixedProportion                    float64 //only for sub account
+	host                               *Host
 }
 
-func (c *Client) runningStatus() bool {
+func (c *client) runningStatus() bool {
 	return c.running.Load()
 }
 
-func (c *Client) restart() {
+func (c *client) restart() {
 	c.subRoutineCloser <- 0
 	c.running.Store(false)
 }
 
-//func (c *Client) checkForRestart() {
+//func (c *client) checkForRestart() {
 //
 //	for {
 //		time.Sleep(time.Millisecond)

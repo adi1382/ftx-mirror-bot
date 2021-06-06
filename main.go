@@ -17,15 +17,22 @@ func init() {
 }
 
 func main() {
-	hostClient := client.NewClient("kqAyKxRHgQreYe4iNLB7qnpSp1zQsjQP2ePFUDjq", "PhqPf5qpoCp7aFjYC4Ua5ZJTAHuBP20P0TwyZvOX", subRoutineCloser, &wg)
-
+	hostClient := client.NewHostClient("kqAyKxRHgQreYe4iNLB7qnpSp1zQsjQP2ePFUDjq", "PhqPf5qpoCp7aFjYC4Ua5ZJTAHuBP20P0TwyZvOX", subRoutineCloser, &wg)
 	hostClient.Initialize()
 
 	go func() {
-		time.Sleep(time.Minute)
-		fmt.Println("Attemptingggg")
-		subRoutineCloser <- 0
+		for {
+			fmt.Println(hostClient.FetchOpenOrders())
+			fmt.Println(hostClient.FetchOpenPositions())
+			time.Sleep(time.Second)
+		}
 	}()
+
+	//go func() {
+	//	time.Sleep(time.Minute)
+	//	fmt.Println("Attemptingggg")
+	//	subRoutineCloser <- 0
+	//}()
 
 	wg.Wait()
 	fmt.Println("wait group completed")

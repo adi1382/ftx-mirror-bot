@@ -10,27 +10,27 @@ import (
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/rest/public/markets"
 )
 
-func (c *Client) getAllFuturesList() *futures.ResponseForFutures {
+func (c *client) getAllFuturesList() *futures.ResponseForFutures {
 	resp, err := c.rest.Futures(&futures.RequestForFutures{})
 	c.restError(err)
 
 	return resp
 }
 
-func (c *Client) getAllMarkets() *markets.ResponseForMarkets {
+func (c *client) getAllMarkets() *markets.ResponseForMarkets {
 	resp, err := c.rest.Markets(&markets.RequestForMarkets{})
 	c.restError(err)
 
 	return resp
 }
 
-func (c *Client) getAccountInformation() *account.ResponseForInformation {
+func (c *client) getAccountInformation() *account.ResponseForInformation {
 	accountInformation, err := c.rest.Information(&account.RequestForInformation{})
 	c.restError(err)
 	return accountInformation
 }
 
-func (c *Client) getFills(seconds time.Duration) *fills.Response {
+func (c *client) getFills(seconds time.Duration) *fills.Response {
 	//resp, err := c.rest.Fills(&fills.Request{})
 	resp, err := c.rest.Fills(&fills.Request{
 		Start: time.Now().Unix() - int64(seconds/time.Second),
@@ -41,21 +41,21 @@ func (c *Client) getFills(seconds time.Duration) *fills.Response {
 }
 
 // This Function is not used by the mirror bot, as same results could be obtained from getAccountInformation()
-//func (c *Client) getAllPositions(showAvgPrice bool) *account.ResponseForPositions {
+//func (c *client) getAllPositions(showAvgPrice bool) *account.ResponseForPositions {
 //	resp, err := c.rest.Positions(&account.RequestForPositions{ShowAvgPrice: showAvgPrice})
 //	c.restError(err)
 //
 //	return resp
 //}
 
-func (c *Client) getAllOpenOrders() *orders.ResponseForOpenOrder {
+func (c *client) getAllOpenOrders() *orders.ResponseForOpenOrder {
 	resp, err := c.rest.OpenOrder(&orders.RequestForOpenOrder{})
 	c.restError(err)
 
 	return resp
 }
 
-func (c *Client) restError(err error) {
+func (c *client) restError(err error) {
 	if err != nil {
 		c.restart()
 		panic(err)

@@ -8,7 +8,7 @@ import (
 	"github.com/adi1382/ftx-mirror-bot/websocket"
 )
 
-func (c *Client) pushChannelToTheTopOfUserStream(tempChannel chan []byte) {
+func (c *client) pushChannelToTheTopOfUserStream(tempChannel chan []byte) {
 	c.dumpUserStreamToChannel(tempChannel)
 
 	n := len(tempChannel)
@@ -23,13 +23,13 @@ func (c *Client) pushChannelToTheTopOfUserStream(tempChannel chan []byte) {
 	}
 }
 
-func (c *Client) dumpUserStreamToChannel(tempChannel chan []byte) {
+func (c *client) dumpUserStreamToChannel(tempChannel chan []byte) {
 	for len(c.userStream) > 0 {
 		tempChannel <- <-c.userStream
 	}
 }
 
-func (c *Client) fetchMessagesFromChannel(tempChannel chan []byte) [][]byte {
+func (c *client) fetchMessagesFromChannel(tempChannel chan []byte) [][]byte {
 	byteMessages := make([][]byte, 0, 2)
 
 	for len(tempChannel) > 0 {
@@ -43,7 +43,7 @@ func (c *Client) fetchMessagesFromChannel(tempChannel chan []byte) [][]byte {
 	return byteMessages
 }
 
-func (c *Client) fetchMessagesFromUserStreamWithoutModifyingUserStream(minChannelLength int, timeout time.Duration) [][]byte {
+func (c *client) fetchMessagesFromUserStreamWithoutModifyingUserStream(minChannelLength int, timeout time.Duration) [][]byte {
 	tempChannel := make(chan []byte, 100)
 	timer := time.NewTimer(timeout)
 	defer timer.Stop()
@@ -72,7 +72,7 @@ L:
 	return messages
 }
 
-func (c *Client) fetchSubscribedChannels(messages [][]byte) []string {
+func (c *client) fetchSubscribedChannels(messages [][]byte) []string {
 	wsMessage := new(websocket.Response)
 	subscribed := make([]string, 0, 2)
 
@@ -87,7 +87,7 @@ func (c *Client) fetchSubscribedChannels(messages [][]byte) []string {
 	return subscribed
 }
 
-func (c *Client) checkIfStreamsAreSuccessfullySubscribed(channelsToSubscribe []string, timeout time.Duration) {
+func (c *client) checkIfStreamsAreSuccessfullySubscribed(channelsToSubscribe []string, timeout time.Duration) {
 	noOfChannelsToCheck := len(channelsToSubscribe)
 	noOfChannelsSubscribed := 0
 	startTime := time.Now().Unix()

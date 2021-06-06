@@ -1,27 +1,24 @@
-package sub
+package client
 
 import (
 	"sync"
-
-	"github.com/adi1382/ftx-mirror-bot/client"
-	"github.com/adi1382/ftx-mirror-bot/host"
 )
 
 func NewSubClient(
 	apiKey, apiSecret string,
 	subRoutineCloser chan int,
 	wg *sync.WaitGroup,
-	host *host.Host) *Sub {
+	host *Host) *Sub {
 	c := Sub{
-		client: client.NewClient(apiKey, apiSecret, subRoutineCloser, wg), hostClient: host,
+		client: newClient(apiKey, apiSecret, subRoutineCloser, wg), hostClient: host,
 	}
 	c.hostMessageUpdates = make(chan []byte, 100)
 	return &c
 }
 
 type Sub struct {
-	client             *client.Client
-	hostClient         *host.Host
+	client             *client
+	hostClient         *Host
 	hostMessageUpdates chan []byte
 	subRoutineCloser   chan int
 	wg                 *sync.WaitGroup

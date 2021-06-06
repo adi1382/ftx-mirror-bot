@@ -1,10 +1,8 @@
 package mirror
 
 import (
+	"github.com/adi1382/ftx-mirror-bot/client"
 	"sync"
-
-	"github.com/adi1382/ftx-mirror-bot/host"
-	"github.com/adi1382/ftx-mirror-bot/sub"
 )
 
 func NewMirrorInstance(wg *sync.WaitGroup, subRoutineCloser chan int) *Mirror {
@@ -15,16 +13,16 @@ func NewMirrorInstance(wg *sync.WaitGroup, subRoutineCloser chan int) *Mirror {
 }
 
 type Mirror struct {
-	hostClient       *host.Host
-	subClients       []*sub.Sub
+	hostClient       *client.Host
+	subClients       []*client.Sub
 	wg               *sync.WaitGroup
 	subRoutineCloser chan int
 }
 
-func (m *Mirror) SetHostClient(host *host.Host) {
+func (m *Mirror) SetHostClient(host *client.Host) {
 	m.hostClient = host
 }
 
-func (m *Mirror) AddSubClient(sub *sub.Sub) {
+func (m *Mirror) AddSubClient(sub *client.Sub) {
 	m.subClients = append(m.subClients, sub)
 }

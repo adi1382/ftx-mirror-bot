@@ -10,13 +10,13 @@ import (
 	"github.com/adi1382/ftx-mirror-bot/websocket"
 )
 
-type Position struct {
+type position struct {
 	Market string  `json:"market"`
 	Size   float64 `json:"size"`
 	Side   string  `json:"side"`
 }
 
-func (c *Client) initializeAccountInfoAndPositions() {
+func (c *client) initializeAccountInfoAndPositions() {
 	// Things to note
 	// 1. Positions are made up of fills
 	// 2. Any fills are received through WS, older than accountInformation request must be ignored
@@ -42,7 +42,7 @@ func (c *Client) initializeAccountInfoAndPositions() {
 			continue
 		}
 
-		newPosition := new(Position)
+		newPosition := new(position)
 		newPosition.Market = accountInformation.Positions[i].Future
 		newPosition.Size = accountInformation.Positions[i].NetSize
 		newPosition.Side = accountInformation.Positions[i].Side
@@ -51,7 +51,7 @@ func (c *Client) initializeAccountInfoAndPositions() {
 	}
 }
 
-func (c *Client) fetchAccountInformationAndUpdateLastFillTime() *account.ResponseForInformation {
+func (c *client) fetchAccountInformationAndUpdateLastFillTime() *account.ResponseForInformation {
 	for {
 		accountInformationRestCallTime := time.Now().Unix()
 		accountInformation := c.getAccountInformation()
@@ -70,7 +70,7 @@ func (c *Client) fetchAccountInformationAndUpdateLastFillTime() *account.Respons
 	}
 }
 
-func (c *Client) areAnyFillsAfterAccountInformationCall(fillsResponse *fills.Response, accountInformationRestCallTime int64) bool {
+func (c *client) areAnyFillsAfterAccountInformationCall(fillsResponse *fills.Response, accountInformationRestCallTime int64) bool {
 	for i := range *fillsResponse {
 		if (*fillsResponse)[i].Time.Unix() > accountInformationRestCallTime {
 			return true
@@ -86,7 +86,7 @@ func (c *Client) areAnyFillsAfterAccountInformationCall(fillsResponse *fills.Res
 	return false
 }
 
-func (c *Client) shutDownPositionCoolDownAfter(coolDownTime time.Duration) {
+func (c *client) shutDownPositionCoolDownAfter(coolDownTime time.Duration) {
 	time.AfterFunc(coolDownTime, func() {
 		c.isPositionCoolDownPeriod.Store(false)
 	})
@@ -94,7 +94,7 @@ func (c *Client) shutDownPositionCoolDownAfter(coolDownTime time.Duration) {
 
 ///////////////////////// BEGIN --> STREAM ORDER FUNCTIONALITIES /////////////////////////
 
-func (c *Client) handleFillUpdateFromStream(newFill *websocket.FillsData) {
+func (c *client) handleFillUpdateFromStream(newFill *websocket.FillsData) {
 	c.openPositionsLock.Lock()
 	defer c.openPositionsLock.Unlock()
 
@@ -125,7 +125,7 @@ func (c *Client) handleFillUpdateFromStream(newFill *websocket.FillsData) {
 
 }
 
-func (c *Client) checkIfPositionAlreadyExistsForSymbol(newFill *websocket.FillsData) int {
+func (c *client) checkIfPositionAlreadyExistsForSymbol(newFill *websocket.FillsData) int {
 	positionIndex := -1
 
 	for i := range c.openPositions {
@@ -137,7 +137,7 @@ func (c *Client) checkIfPositionAlreadyExistsForSymbol(newFill *websocket.FillsD
 	return positionIndex
 }
 
-func (c *Client) updateExistingPosition(newFill *websocket.FillsData, positionIndex int) {
+func (c *client) updateExistingPosition(newFill *websocket.FillsData, positionIndex int) {
 	var fillSize float64
 	if newFill.Side == "buy" {
 		fillSize = math.Abs(newFill.Size)
@@ -154,13 +154,13 @@ func (c *Client) updateExistingPosition(newFill *websocket.FillsData, positionIn
 	}
 }
 
-func (c *Client) removePositionIfRequired(positionIndex int) {
+func (c *client) removePositionIfRequired(positionIndex int) {
 	if c.openPositions[positionIndex].Size == 0 {
 		c.openPositions = append(c.openPositions[:positionIndex], c.openPositions[positionIndex+1:]...)
 	}
 }
 
-func (c *Client) insertNewPosition(newFill *websocket.FillsData) int {
+func (c *client) insertNewPosition(newFill *websocket.FillsData) int {
 	var fillSize float64
 	if newFill.Side == "buy" {
 		fillSize = math.Abs(newFill.Size)
@@ -168,7 +168,7 @@ func (c *Client) insertNewPosition(newFill *websocket.FillsData) int {
 		fillSize = -math.Abs(newFill.Size)
 	}
 
-	c.openPositions = append(c.openPositions, &Position{
+	c.openPositions = append(c.openPositions, &position{
 		Market: newFill.Future,
 		Side:   newFill.Side,
 		Size:   fillSize,

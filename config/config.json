@@ -1,7 +1,8 @@
 {
 
     "Settings": {
-        "RatioUpdateRate": 3600,
+        "LeverageUpdateDuration": 10,
+        "CollateralUpdateDuration": 3600,
         "CalibrationRate": 10
     },
 
