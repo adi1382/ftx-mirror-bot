@@ -1,12 +1,13 @@
 package client
 
 import (
+	"sync"
+
 	"github.com/adi1382/ftx-mirror-bot/constants"
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/auth"
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/rest"
 	"github.com/adi1382/ftx-mirror-bot/websocket"
 	"go.uber.org/atomic"
-	"sync"
 )
 
 func NewClient(apiKey, secret string, isRestartRequired *atomic.Bool) *Client {
@@ -41,8 +42,8 @@ type Client struct {
 	symbolTickers                 map[string]float64
 	symbolTickerLock              sync.Mutex
 	symbolTickerLastUpdated       atomic.Int64
-	openOrders                    []*order
-	openPositions                 []*position
+	openOrders                    []*Order
+	openPositions                 []*Position
 	openOrdersLock                sync.Mutex
 	openPositionsLock             sync.Mutex
 	balanceUpdateRate             float64 // Applied till here
@@ -100,11 +101,11 @@ func (c *Client) restart() {
 //	}
 //}
 
-func (c *Client) ActiveOrders() []order {
+func (c *Client) ActiveOrders() []Order {
 	c.openOrdersLock.Lock()
 	defer c.openOrdersLock.Unlock()
 
-	openOrders := make([]order, 0, 5)
+	openOrders := make([]Order, 0, 5)
 	for i := range c.openOrders {
 		openOrders = append(openOrders, *c.openOrders[i])
 	}
@@ -113,11 +114,11 @@ func (c *Client) ActiveOrders() []order {
 
 }
 
-func (c *Client) ActivePositions() []position {
+func (c *Client) ActivePositions() []Position {
 	c.openPositionsLock.Lock()
 	defer c.openPositionsLock.Unlock()
 
-	openPositions := make([]position, 0, 5)
+	openPositions := make([]Position, 0, 5)
 	for i := range c.openPositions {
 		openPositions = append(openPositions, *c.openPositions[i])
 	}

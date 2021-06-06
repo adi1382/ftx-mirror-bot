@@ -5,7 +5,7 @@ import (
 	"github.com/adi1382/ftx-mirror-bot/optional"
 )
 
-type order struct {
+type Order struct {
 	Id            int64           `json:"id"`
 	Market        string          `json:"market"`
 	Type          string          `json:"type"`
@@ -43,9 +43,9 @@ func (c *Client) generateNativeOrdersFromRestResponse(openOrders *orders.Respons
 	}
 }
 
-func (c *Client) generateNativeOrderFromRestOrder(restOrder orders.OpenOrder) *order {
+func (c *Client) generateNativeOrderFromRestOrder(restOrder orders.OpenOrder) *Order {
 
-	nativeOrder := new(order)
+	nativeOrder := new(Order)
 
 	nativeOrder.Id = restOrder.ID
 	nativeOrder.Market = restOrder.Market
@@ -70,7 +70,7 @@ func (c *Client) generateNativeOrderFromRestOrder(restOrder orders.OpenOrder) *o
 
 ///////////////////////// BEGIN --> STREAM ORDER FUNCTIONALITIES /////////////////////////
 
-func (c *Client) handleOrderUpdateFromStream(newOrder *order) {
+func (c *Client) handleOrderUpdateFromStream(newOrder *Order) {
 	c.openOrdersLock.Lock()
 	defer c.openOrdersLock.Unlock()
 
@@ -89,7 +89,7 @@ func (c *Client) handleOrderUpdateFromStream(newOrder *order) {
 }
 
 // This function should only be called from handleOrderUpdateFromStream because of mutex synchronizations
-func (c *Client) checkIfOrderAlreadyExists(newOrder *order) int {
+func (c *Client) checkIfOrderAlreadyExists(newOrder *Order) int {
 	indexOfOrder := -1
 
 	for i := range c.openOrders {
@@ -102,7 +102,7 @@ func (c *Client) checkIfOrderAlreadyExists(newOrder *order) int {
 }
 
 // This function should only be called from handleOrderUpdateFromStream because of mutex synchronizations
-func (c *Client) updateExistingOrder(newOrder *order, existingOrderIndex int, isRemovalRequired bool) {
+func (c *Client) updateExistingOrder(newOrder *Order, existingOrderIndex int, isRemovalRequired bool) {
 	c.openOrders[existingOrderIndex] = newOrder
 
 	if isRemovalRequired {
@@ -112,7 +112,7 @@ func (c *Client) updateExistingOrder(newOrder *order, existingOrderIndex int, is
 }
 
 // This function should only be called from handleOrderUpdateFromStream because of mutex synchronizations
-func (c *Client) checkIfOrderNeedsToBeRemoved(newOrder *order) bool {
+func (c *Client) checkIfOrderNeedsToBeRemoved(newOrder *Order) bool {
 	if newOrder.RemainingSize == 0 || newOrder.Type == "market" || newOrder.Status == "closed" {
 		return true
 	}
@@ -120,7 +120,7 @@ func (c *Client) checkIfOrderNeedsToBeRemoved(newOrder *order) bool {
 }
 
 // This function should only be called from handleOrderUpdateFromStream because of mutex synchronizations
-func (c *Client) insertNewOrder(newOrder *order) {
+func (c *Client) insertNewOrder(newOrder *Order) {
 	c.openOrders = append(c.openOrders, newOrder)
 }
 

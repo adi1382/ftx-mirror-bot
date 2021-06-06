@@ -1,11 +1,19 @@
 package host
 
-import "github.com/adi1382/ftx-mirror-bot/client"
+import (
+	"sync"
+
+	"github.com/adi1382/ftx-mirror-bot/client"
+)
 
 func NewHostClient() {
 
 }
 
-type host struct {
-	client *client.Client
+type Host struct {
+	client            *client.Client
+	openOrders        []*client.Order
+	openPositions     []*client.Position
+	openOrdersLock    sync.Mutex
+	openPositionsLock sync.Mutex
 }

@@ -2,6 +2,7 @@ package client
 
 import (
 	"encoding/json"
+
 	"github.com/adi1382/ftx-mirror-bot/websocket"
 )
 
@@ -62,7 +63,7 @@ func (c *Client) unhandledError(err error) {
 func (c *Client) handleWebSocketData(data []byte, channel string) {
 	switch channel {
 	case "orders":
-		newOrderUpdate := new(order)
+		newOrderUpdate := new(Order)
 		err := json.Unmarshal(data, newOrderUpdate)
 		c.unhandledError(err)
 		c.handleOrderUpdateFromStream(newOrderUpdate)

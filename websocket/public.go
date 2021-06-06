@@ -1,9 +1,10 @@
 package websocket
 
 import (
+	"sync"
+
 	"github.com/gorilla/websocket"
 	"go.uber.org/atomic"
-	"sync"
 )
 
 type WSConnection struct {

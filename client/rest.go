@@ -1,12 +1,13 @@
 package client
 
 import (
+	"time"
+
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/rest/private/account"
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/rest/private/fills"
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/rest/private/orders"
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/rest/public/futures"
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/rest/public/markets"
-	"time"
 )
 
 func (c *Client) getAllFuturesList() *futures.ResponseForFutures {

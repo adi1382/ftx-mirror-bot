@@ -1,15 +1,16 @@
 package client
 
 import (
+	"math"
+	"time"
+
 	"github.com/adi1382/ftx-mirror-bot/constants"
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/rest/private/account"
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/rest/private/fills"
 	"github.com/adi1382/ftx-mirror-bot/websocket"
-	"math"
-	"time"
 )
 
-type position struct {
+type Position struct {
 	Market string  `json:"market"`
 	Size   float64 `json:"size"`
 	Side   string  `json:"side"`
@@ -41,7 +42,7 @@ func (c *Client) initializeAccountInfoAndPositions() {
 			continue
 		}
 
-		newPosition := new(position)
+		newPosition := new(Position)
 		newPosition.Market = accountInformation.Positions[i].Future
 		newPosition.Size = accountInformation.Positions[i].NetSize
 		newPosition.Side = accountInformation.Positions[i].Side
@@ -167,7 +168,7 @@ func (c *Client) insertNewPosition(newFill *websocket.FillsData) int {
 		fillSize = -math.Abs(newFill.Size)
 	}
 
-	c.openPositions = append(c.openPositions, &position{
+	c.openPositions = append(c.openPositions, &Position{
 		Market: newFill.Future,
 		Side:   newFill.Side,
 		Size:   fillSize,

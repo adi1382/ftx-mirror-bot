@@ -2,10 +2,11 @@ package markets
 
 import (
 	"fmt"
-	"github.com/adi1382/ftx-mirror-bot/go-ftx/types"
-	"github.com/google/go-querystring/query"
 	"net/http"
 	"time"
+
+	"github.com/adi1382/ftx-mirror-bot/go-ftx/types"
+	"github.com/google/go-querystring/query"
 )
 
 // RequestForTrades query

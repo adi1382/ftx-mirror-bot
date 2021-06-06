@@ -5,10 +5,11 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"github.com/adi1382/ftx-mirror-bot/constants"
-	"github.com/gorilla/websocket"
 	"net/url"
 	"time"
+
+	"github.com/adi1382/ftx-mirror-bot/constants"
+	"github.com/gorilla/websocket"
 )
 
 type wsMessage struct {

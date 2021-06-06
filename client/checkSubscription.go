@@ -3,8 +3,9 @@ package client
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/adi1382/ftx-mirror-bot/websocket"
 	"time"
+
+	"github.com/adi1382/ftx-mirror-bot/websocket"
 )
 
 func (c *Client) pushChannelToTheTopOfUserStream(tempChannel chan []byte) {
