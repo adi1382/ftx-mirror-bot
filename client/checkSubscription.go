@@ -58,7 +58,7 @@ L:
 				break L
 			}
 		case <-timer.C:
-			fmt.Printf("Didn't received %d message(s) in 15 seconds. Trying to restart...", minChannelLength)
+			fmt.Printf("Didn't received %d message(s) in 15 seconds. Trying to restart...\n", minChannelLength)
 			c.restart()
 			return nil
 		}

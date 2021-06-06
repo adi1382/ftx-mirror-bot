@@ -43,9 +43,11 @@ func (ws *WSConnection) readFromWSToChannel(chReadWS chan<- []byte) {
 
 func (ws *WSConnection) subscribeToPrivateChannels(channels []string) {
 	for i := range channels {
+		ws.wsWriteLock.Lock()
 		err := ws.Conn.WriteJSON(&wsMessage{
 			Op:      "subscribe",
 			Channel: channels[i]})
+		ws.wsWriteLock.Unlock()
 		if err != nil {
 			ws.websocketError(err)
 			return
@@ -77,7 +79,11 @@ func (ws *WSConnection) pingPong() {
 	for {
 		select {
 		case <-ticker.C:
-			if err := ws.Conn.WriteMessage(websocket.PingMessage, []byte(`{"op": "ping"}`)); err != nil {
+			ws.wsWriteLock.Lock()
+			err := ws.Conn.WriteMessage(websocket.PingMessage, []byte(`{"op": "ping"}`))
+			ws.wsWriteLock.Unlock()
+
+			if err != nil {
 				ws.websocketError(err)
 				return
 			}

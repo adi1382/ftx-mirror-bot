@@ -26,7 +26,7 @@ type Client struct {
 	apiKey                        string
 	rest                          *rest.Client
 	symbolsInfo                   map[string]symbolInfo
-	wsConnection                  websocket.WSConnection
+	wsConnection                  *websocket.WSConnection
 	userStream                    chan []byte
 	subscriptionsToUserStream     []chan []byte //is subscribed by subAccounts to hostAccounts
 	subscriptionsToUserStreamLock sync.Mutex
