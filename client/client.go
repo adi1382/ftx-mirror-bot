@@ -1,6 +1,7 @@
 package client
 
 import (
+	"github.com/adi1382/ftx-mirror-bot/constants"
 	"sync"
 
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/auth"
@@ -9,9 +10,15 @@ import (
 	"go.uber.org/atomic"
 )
 
-func newClient(apiKey, secret string, subRoutineCloser chan int, wg *sync.WaitGroup) *client {
+func newClient(
+	apiKey, secret string,
+	leverageUpdateDuration, balanceUpdateDuration int64,
+	subRoutineCloser chan int, wg *sync.WaitGroup) *client {
+
 	c := client{apiKey: apiKey}
 	c.rest = rest.New(auth.New(apiKey, secret))
+	c.leverageUpdateDuration = leverageUpdateDuration
+	c.balanceUpdateDuration = balanceUpdateDuration
 	c.subRoutineCloser = subRoutineCloser
 	c.wg = wg
 	c.wsConnection = websocket.NewSocketConnection(apiKey, secret, c.subRoutineCloser, c.wg)
@@ -40,18 +47,30 @@ type client struct {
 	symbolTickers                      map[string]float64
 	symbolTickerLock                   sync.Mutex
 	symbolTickerLastUpdated            atomic.Int64
-	openOrders                         []*order
+	activeOrders                       []*order
 	openPositions                      []*position
-	openOrdersLock                     sync.Mutex
+	activeOrdersLock                   sync.Mutex
 	openPositionsLock                  sync.Mutex //Applied till here
 	leverageUpdateDuration             int64
 	balanceUpdateDuration              int64
 	lastAccountInformationCallTimeUnix int64
-	calibrationDuration                int64   //only for sub account
-	isCopyLeverage                     bool    //only for sub account
-	isBalanceProportional              bool    //only for sub account
-	fixedProportion                    float64 //only for sub account
-	host                               *Host
+}
+
+func (c *client) initialize() {
+	c.wsConnection.Connect(c.userStream)
+
+	c.wsConnection.AuthenticateWebsocketConnection()
+	c.wsConnection.SubscribeToPrivateStreams()
+	c.checkIfStreamsAreSuccessfullySubscribed([]string{"fills", "orders"}, constants.TimeoutToCheckForSubscriptions)
+	if !c.runningStatus() {
+		return
+	}
+
+	c.initializeAccountInfoAndPositions()
+	c.initializeOrders()
+
+	c.wg.Add(1)
+	go c.receiveStreamingData()
 }
 
 func (c *client) runningStatus() bool {

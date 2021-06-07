@@ -15,3 +15,11 @@ const PositionsInitializingCoolDown = 15 * time.Second
 const TimeoutToCheckForSubscriptions = 15 * time.Second
 
 const ConfigPath = "config/config.json"
+
+const OrderIDEncryptionKey = "EF4359D8D580AA4F7F036D6F04FC6A94"
+
+const OrderIDEncryptionTweak = "D8E7920AFA330A73"
+
+const ClientOrderIDPrefix = "DTM"
+
+const ClientOrderIDSuffixLength = 4

@@ -23,9 +23,9 @@ type order struct {
 }
 
 func (c *client) initializeOrders() {
-	c.openOrdersLock.Lock()
-	c.openOrders = c.openOrders[:0]
-	c.openOrdersLock.Unlock()
+	c.activeOrdersLock.Lock()
+	c.activeOrders = c.activeOrders[:0]
+	c.activeOrdersLock.Unlock()
 
 	openOrders := c.getAllOpenOrders()
 	if openOrders == nil {
@@ -35,11 +35,11 @@ func (c *client) initializeOrders() {
 }
 
 func (c *client) generateNativeOrdersFromRestResponse(openOrders *orders.ResponseForOpenOrder) {
-	c.openOrdersLock.Lock()
-	defer c.openOrdersLock.Unlock()
+	c.activeOrdersLock.Lock()
+	defer c.activeOrdersLock.Unlock()
 
 	for i := range *openOrders {
-		c.openOrders = append(c.openOrders, c.generateNativeOrderFromRestOrder((*openOrders)[i]))
+		c.activeOrders = append(c.activeOrders, c.generateNativeOrderFromRestOrder((*openOrders)[i]))
 	}
 }
 
@@ -71,8 +71,8 @@ func (c *client) generateNativeOrderFromRestOrder(restOrder orders.OpenOrder) *o
 ///////////////////////// BEGIN --> STREAM ORDER FUNCTIONALITIES /////////////////////////
 
 func (c *client) handleOrderUpdateFromStream(newOrder *order) {
-	c.openOrdersLock.Lock()
-	defer c.openOrdersLock.Unlock()
+	c.activeOrdersLock.Lock()
+	defer c.activeOrdersLock.Unlock()
 
 	removalRequired := c.checkIfOrderNeedsToBeRemoved(newOrder)
 
@@ -92,8 +92,8 @@ func (c *client) handleOrderUpdateFromStream(newOrder *order) {
 func (c *client) checkIfOrderAlreadyExists(newOrder *order) int {
 	indexOfOrder := -1
 
-	for i := range c.openOrders {
-		if c.openOrders[i].Id == newOrder.Id {
+	for i := range c.activeOrders {
+		if c.activeOrders[i].Id == newOrder.Id {
 			return i
 		}
 	}
@@ -103,10 +103,10 @@ func (c *client) checkIfOrderAlreadyExists(newOrder *order) int {
 
 // This function should only be called from handleOrderUpdateFromStream because of mutex synchronizations
 func (c *client) updateExistingOrder(newOrder *order, existingOrderIndex int, isRemovalRequired bool) {
-	c.openOrders[existingOrderIndex] = newOrder
+	c.activeOrders[existingOrderIndex] = newOrder
 
 	if isRemovalRequired {
-		c.openOrders = append(c.openOrders[:existingOrderIndex], c.openOrders[existingOrderIndex+1:]...)
+		c.activeOrders = append(c.activeOrders[:existingOrderIndex], c.activeOrders[existingOrderIndex+1:]...)
 	}
 
 }
@@ -121,7 +121,7 @@ func (c *client) checkIfOrderNeedsToBeRemoved(newOrder *order) bool {
 
 // This function should only be called from handleOrderUpdateFromStream because of mutex synchronizations
 func (c *client) insertNewOrder(newOrder *order) {
-	c.openOrders = append(c.openOrders, newOrder)
+	c.activeOrders = append(c.activeOrders, newOrder)
 }
 
 ///////////////////////// END --> STREAM ORDER FUNCTIONALITIES /////////////////////////
