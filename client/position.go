@@ -162,7 +162,8 @@ func (c *client) updateExistingPosition(newFill *websocket.FillsData, positionIn
 
 func (c *client) removePositionIfRequired(positionIndex int) {
 	if c.openPositions[positionIndex].Size == 0 {
-		c.openPositions = append(c.openPositions[:positionIndex], c.openPositions[positionIndex+1:]...)
+		c.openPositions[positionIndex] = c.openPositions[len(c.openPositions)-1]
+		c.openPositions = c.openPositions[:len(c.openPositions)-1]
 	}
 }
 

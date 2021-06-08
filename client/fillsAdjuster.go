@@ -1,7 +1,6 @@
 package client
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/adi1382/ftx-mirror-bot/tools"
@@ -24,18 +23,12 @@ func (c *client) addToFillsAdjuster(market string, fillSize float64) {
 	c.fillsAdjusterLock.Lock()
 	defer c.fillsAdjusterLock.Unlock()
 
-	c.fillsAdjuster[market] += fillSize
-	c.fillsAdjuster[market] = tools.RoundFloat(c.fillsAdjuster[market])
+	c.fillsAdjuster[market] = tools.RoundFloat(c.fillsAdjuster[market] + fillSize)
 }
 
 func (c *client) removeFromFillsAdjuster(market, side string, fillSize *float64) {
 	c.fillsAdjusterLock.Lock()
 	defer c.fillsAdjusterLock.Unlock()
-
-	fmt.Println("$$$$$$$$$$$$$$$")
-	fmt.Println(market, side, *fillSize)
-	fmt.Println("$$$$$$$$$$$$$$$")
-	fmt.Println(c.fillsAdjuster[market])
 
 	var f float64
 
@@ -47,8 +40,7 @@ func (c *client) removeFromFillsAdjuster(market, side string, fillSize *float64)
 
 	if c.fillsAdjuster[market]*f > 0 {
 		if math.Abs(c.fillsAdjuster[market]) > math.Abs(f) {
-			c.fillsAdjuster[market] -= f
-			c.fillsAdjuster[market] = tools.RoundFloat(c.fillsAdjuster[market])
+			c.fillsAdjuster[market] = tools.RoundFloat(c.fillsAdjuster[market] - f)
 			f = 0
 		} else {
 			f -= c.fillsAdjuster[market]
@@ -59,5 +51,4 @@ func (c *client) removeFromFillsAdjuster(market, side string, fillSize *float64)
 
 	*fillSize = math.Abs(f)
 	tools.RoundFloatPointer(fillSize)
-	fmt.Println(*fillSize)
 }

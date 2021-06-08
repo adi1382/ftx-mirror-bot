@@ -234,8 +234,8 @@ func (s *Sub) updatePositionsInLocalStateFromMarketOrderRequests(marketOrders []
 			if s.client.openPositions[j].Market == marketOrders[i].Market {
 				if marketOrders[i].Side == "buy" {
 					s.client.openPositions[j].Size += math.Abs(marketOrders[i].Size)
-
 					tools.RoundFloatPointer(&s.client.openPositions[j].Size)
+
 					// remove positions if size is 0
 					if s.client.openPositions[j].Size == 0 {
 						s.client.openPositions[j] = s.client.openPositions[len(s.client.openPositions)-1]
@@ -245,8 +245,8 @@ func (s *Sub) updatePositionsInLocalStateFromMarketOrderRequests(marketOrders []
 					s.client.addToFillsAdjuster(marketOrders[i].Market, math.Abs(marketOrders[i].Size))
 				} else {
 					s.client.openPositions[j].Size += -math.Abs(marketOrders[i].Size)
-
 					tools.RoundFloatPointer(&s.client.openPositions[j].Size)
+
 					// remove positions if size is 0
 					if s.client.openPositions[j].Size == 0 {
 						s.client.openPositions[j] = s.client.openPositions[len(s.client.openPositions)-1]
@@ -281,6 +281,10 @@ func (s *Sub) updateOrdersInLocalStateFromOrderResponses(orderResponses []*order
 			ReduceOnly:    orderResponses[i].ReduceOnly,
 			Ioc:           orderResponses[i].Ioc,
 			PostOnly:      orderResponses[i].PostOnly,
+		}
+
+		if newOrder.RemainingSize == 0 {
+			continue
 		}
 
 		newOrder.ClientId.SetValue(orderResponses[i].ClientID)

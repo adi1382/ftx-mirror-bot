@@ -106,7 +106,8 @@ func (c *client) updateExistingOrder(newOrder *order, existingOrderIndex int, is
 	c.activeOrders[existingOrderIndex] = newOrder
 
 	if isRemovalRequired {
-		c.activeOrders = append(c.activeOrders[:existingOrderIndex], c.activeOrders[existingOrderIndex+1:]...)
+		c.activeOrders[existingOrderIndex] = c.activeOrders[len(c.activeOrders)-1]
+		c.activeOrders = c.activeOrders[:len(c.activeOrders)-1]
 	}
 
 }
