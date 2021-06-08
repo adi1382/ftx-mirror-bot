@@ -3,10 +3,11 @@ package fpe
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"github.com/adi1382/ftx-mirror-bot/constants"
 	"log"
 	"math/big"
 	"strings"
+
+	"github.com/adi1382/ftx-mirror-bot/constants"
 )
 
 var ff3 cipherFF3

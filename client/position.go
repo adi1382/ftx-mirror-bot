@@ -7,6 +7,7 @@ import (
 	"github.com/adi1382/ftx-mirror-bot/constants"
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/rest/private/account"
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/rest/private/fills"
+	"github.com/adi1382/ftx-mirror-bot/tools"
 	"github.com/adi1382/ftx-mirror-bot/websocket"
 )
 
@@ -112,6 +113,10 @@ func (c *client) handleFillUpdateFromStream(newFill *websocket.FillsData) {
 			return
 		}
 	}
+	c.removeFromFillsAdjuster(newFill.Market, newFill.Side, &newFill.Size)
+	if newFill.Size == 0 {
+		return
+	}
 
 	if index := c.checkIfPositionAlreadyExistsForSymbol(newFill); index > -1 {
 		c.updateExistingPosition(newFill, index)
@@ -146,6 +151,7 @@ func (c *client) updateExistingPosition(newFill *websocket.FillsData, positionIn
 	}
 
 	c.openPositions[positionIndex].Size += fillSize
+	tools.RoundFloatPointer(&c.openPositions[positionIndex].Size)
 
 	if c.openPositions[positionIndex].Size >= 0 {
 		c.openPositions[positionIndex].Side = "buy"

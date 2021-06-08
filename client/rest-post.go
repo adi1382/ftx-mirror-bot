@@ -1,6 +1,8 @@
 package client
 
 import (
+	"fmt"
+
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/rest/private/account"
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/rest/private/orders"
 )
@@ -12,9 +14,11 @@ func (c *client) postCancelOrderByID(orderId int) {
 	c.restError(err)
 }
 
-func (c *client) postPlaceOrder(order *orders.RequestForPlaceOrder) {
-	_, err := c.rest.PlaceOrder(order)
+func (c *client) postPlaceOrder(order *orders.RequestForPlaceOrder) *orders.ResponseForPlaceOrder {
+	fmt.Println("Size: ", order.Size, order.Market, order.Side)
+	resp, err := c.rest.PlaceOrder(order)
 	c.restError(err)
+	return resp
 }
 
 func (c *client) postChangeLeverage(leverage float64) {

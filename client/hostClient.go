@@ -68,8 +68,8 @@ func (h *Host) SymbolInformation() map[string]symbolInfo {
 	defer h.client.symbolInfoLock.Unlock()
 
 	symbolInformation := make(map[string]symbolInfo, 1000)
-	for k, v := range h.client.symbolsInfo {
-		symbolInformation[k] = v
+	for k := range h.client.symbolsInfo {
+		symbolInformation[k] = h.client.symbolsInfo[k]
 	}
 	return symbolInformation
 }

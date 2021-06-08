@@ -1,77 +1,88 @@
 package main
 
-//import (
-//	"crypto/cipher"
-//	"crypto/des"
-//	"crypto/rand"
-//	"encoding/base64"
-//	"fmt"
-//	"io"
-//	"sync"
-//	"time"
-//)
-//
-//var (
-//	subRoutineCloser chan int
-//	wg               sync.WaitGroup
-//)
-//
-//var (
-//	copyLeverage        = true
-//	balanceProportional = true
-//	fixedProportional   = 1
-//)
-//
-//func init() {
-//	subRoutineCloser = make(chan int, 100)
-//}
-//
-////func main() {
-////	hostClient := client.NewHostClient("kqAyKxRHgQreYe4iNLB7qnpSp1zQsjQP2ePFUDjq",
-////		"PhqPf5qpoCp7aFjYC4Ua5ZJTAHuBP20P0TwyZvOX",
-////		10,
-////		10,
-////		subRoutineCloser, &wg)
-////	hostClient.Initialize()
-////
-////	go func() {
-////		for {
-////			fmt.Println(hostClient.ActiveOrders())
-////			fmt.Println(hostClient.OpenPositions())
-////			time.Sleep(time.Second)
-////		}
-////	}()
-////
-////	//go func() {
-////	//	time.Sleep(time.Minute)
-////	//	fmt.Println("Attemptingggg")
-////	//	subRoutineCloser <- 0
-////	//}()
-////
-////	wg.Wait()
-////	fmt.Println("wait group completed")
-////
-////	//n := 0
-////
-////	//go func() {
-////	//	for {
-////	//		fmt.Printf("\n\nActive Positions: %v\n", hostClient.ActivePositions())
-////	//		time.Sleep(time.Second * 5)
-////	//	}
-////	//}()
-////	//
-////	//go func() {
-////	//	for {
-////	//		fmt.Printf("\n\nActive Orders: %v\n", hostClient.ActiveOrders())
-////	//		time.Sleep(time.Second * 5)
-////	//	}
-////	//}()
-////
-////	//fmt.Println("$$$$$$$444")
-////
-////	select {}
-////}
-//
+import (
+	"fmt"
+	"sync"
+
+	"github.com/adi1382/ftx-mirror-bot/client"
+)
+
+var (
+	subRoutineCloser chan int
+	wg               sync.WaitGroup
+)
+
+var (
+	copyLeverage        = true
+	balanceProportional = true
+	fixedProportional   = 1
+)
+
+func init() {
+	subRoutineCloser = make(chan int, 100)
+}
+
+func main() {
+	hostClient := client.NewHostClient("kqAyKxRHgQreYe4iNLB7qnpSp1zQsjQP2ePFUDjq",
+		"PhqPf5qpoCp7aFjYC4Ua5ZJTAHuBP20P0TwyZvOX",
+		10,
+		10,
+		subRoutineCloser, &wg)
+
+	subClient := client.NewSubClient("pVK2kZAxr4xKf1wPGxx0FYtRP87CuPH6JZcQmyqP",
+		"ASGrfAkDazesSlq5e98jZmmTCevGpyE6kg8hSZiE",
+		100,
+		100,
+		10,
+		true,
+		false,
+		1,
+		subRoutineCloser, &wg,
+		hostClient)
+
+	hostClient.Initialize()
+	subClient.Initialize()
+
+	subClient.StartMirroring()
+
+	//go func() {
+	//	for {
+	//		fmt.Println(hostClient.ActiveOrders())
+	//		fmt.Println(hostClient.OpenPositions())
+	//		time.Sleep(time.Second)
+	//	}
+	//}()
+
+	//go func() {
+	//	time.Sleep(time.Minute)
+	//	fmt.Println("Attemptingggg")
+	//	subRoutineCloser <- 0
+	//}()
+
+	wg.Wait()
+	fmt.Println("wait group completed")
+
+	//n := 0
+
+	//go func() {
+	//	for {
+	//		fmt.Printf("\n\nActive Positions: %v\n", hostClient.ActivePositions())
+	//		time.Sleep(time.Second * 5)
+	//	}
+	//}()
+	//
+	//go func() {
+	//	for {
+	//		fmt.Printf("\n\nActive Orders: %v\n", hostClient.ActiveOrders())
+	//		time.Sleep(time.Second * 5)
+	//	}
+	//}()
+
+	//fmt.Println("$$$$$$$444")
+
+	select {}
+}
+
 //func main() {
 //
 //	//bytes := make([]byte, 32) //generate a random 32 byte key for AES-256

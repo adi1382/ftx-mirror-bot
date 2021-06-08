@@ -8,10 +8,12 @@ func (s *Sub) cancelOrderIDs(orderIDs []int64) {
 	}
 }
 
-func (s *Sub) placeOrders(orders []*orders.RequestForPlaceOrder) {
-	for i := range orders {
-		s.client.postPlaceOrder(orders[i])
+func (s *Sub) placeOrders(orderRequests []*orders.RequestForPlaceOrder) []*orders.ResponseForPlaceOrder {
+	orderResponses := make([]*orders.ResponseForPlaceOrder, 0, 5)
+	for i := range orderRequests {
+		orderResponses = append(orderResponses, s.client.postPlaceOrder(orderRequests[i]))
 	}
+	return orderResponses
 }
 
 func (s *Sub) updateLeverage(isLeverageChangeRequired bool, newLeverage float64) {

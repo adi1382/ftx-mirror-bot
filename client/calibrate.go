@@ -1,14 +1,20 @@
 package client
 
 import (
+	"fmt"
+	"math"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/adi1382/ftx-mirror-bot/constants"
 	"github.com/adi1382/ftx-mirror-bot/fpe"
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/rest/private/orders"
-	"strconv"
-	"strings"
+	"github.com/adi1382/ftx-mirror-bot/tools"
 )
 
 func (s *Sub) calibrate() {
+	fmt.Println("Calibration started @", time.Now())
 	s.client.activeOrdersLock.Lock()
 	s.client.openPositionsLock.Lock()
 	defer s.client.openPositionsLock.Unlock()
@@ -23,11 +29,18 @@ func (s *Sub) calibrate() {
 	ordersToCalibrateExistingPositions := s.generateMarketOrdersToCalibrateExistingPositions(hostPositions)
 	ordersToCalibrateNewPositions := s.generateMarketOrdersToCalibrateNewPositions(hostPositions)
 
+	//TODO: concurrent rest requests with could improve time
 	s.cancelOrderIDs(toCancelOrderIDs)
 	s.updateLeverage(isLeverageChangeRequired, newLeverage)
-	s.placeOrders(ordersToCalibrateExistingPositions)
-	s.placeOrders(ordersToCalibrateNewPositions)
-	s.placeOrders(ordersForActiveOrdersOnHostAccount)
+	s.placeOrders(ordersToCalibrateExistingPositions)                   // responses not needed as all are market orders
+	s.placeOrders(ordersToCalibrateNewPositions)                        // responses not needed as all are market orders
+	orderResponses := s.placeOrders(ordersForActiveOrdersOnHostAccount) // responses are needed for order ID
+
+	s.removeOrdersInLocalStateFromOrderIDs(toCancelOrderIDs)
+	s.changeLeverageInLocalState(isLeverageChangeRequired, newLeverage)
+	s.updatePositionsInLocalStateFromMarketOrderRequests(ordersToCalibrateExistingPositions)
+	s.updatePositionsInLocalStateFromMarketOrderRequests(ordersToCalibrateNewPositions)
+	s.updateOrdersInLocalStateFromOrderResponses(orderResponses)
 }
 
 //findUnwantedOrderIDs modifies the map hostOrders by removing orders which have their sub orders already in place
@@ -73,6 +86,9 @@ func (s *Sub) generateNewOrdersForExistingOrdersOnHostAccount(hostOrders map[str
 	ordersForActiveOrdersOnHostAccount := make([]*orders.RequestForPlaceOrder, 0, 5)
 
 	for i := range hostOrders {
+		if s.adjustedSize(hostOrders[i].RemainingSize, hostOrders[i].Market) == 0 {
+			continue
+		}
 		ordersForActiveOrdersOnHostAccount = append(ordersForActiveOrdersOnHostAccount,
 			&orders.RequestForPlaceOrder{
 				ClientID:   fpe.GenerateClOrdIDFromOrdID(strconv.Itoa(int(hostOrders[i].Id))),
@@ -98,7 +114,7 @@ func (s *Sub) isLeverageChangeRequired() (bool, float64) {
 			return true, hostLeverage
 		}
 	}
-	return false, -1
+	return false, s.client.leverage.Load()
 }
 
 //generateMarketOrdersToCalibrateExistingPositions modifies the map hostPositions by removing keys
@@ -121,7 +137,8 @@ func (s *Sub) generateMarketOrdersToCalibrateExistingPositions(hostPositions map
 				requestsForMarketOrders,
 				s.generateMarketOrder(
 					s.client.openPositions[i].Market,
-					s.adjustedSize(v.Size, v.Market)-s.client.openPositions[i].Size))
+					tools.RoundFloat(s.adjustedSize(v.Size, v.Market)-s.client.openPositions[i].Size)))
+			delete(hostPositions, s.client.openPositions[i].Market)
 		} else {
 			// no change is required for this Market
 			delete(hostPositions, s.client.openPositions[i].Market)
@@ -136,13 +153,20 @@ func (s *Sub) generateMarketOrdersToCalibrateExistingPositions(hostPositions map
 func (s *Sub) generateMarketOrdersToCalibrateNewPositions(hostPositions map[string]position) []*orders.RequestForPlaceOrder {
 	requestsForMarketOrders := make([]*orders.RequestForPlaceOrder, 0, 5)
 	for i := range hostPositions {
-		s.generateMarketOrder(hostPositions[i].Market, s.adjustedSize(hostPositions[i].Size, hostPositions[i].Market))
+		if s.adjustedSize(hostPositions[i].Size, hostPositions[i].Market) == 0 {
+			continue
+		}
+		requestsForMarketOrders = append(
+			requestsForMarketOrders,
+			s.generateMarketOrder(
+				hostPositions[i].Market, s.adjustedSize(hostPositions[i].Size, hostPositions[i].Market)))
 	}
 	return requestsForMarketOrders
 }
 
 //generateMarketOrder generates requests for market order, it does not place any order.
 func (s *Sub) generateMarketOrder(market string, size float64) *orders.RequestForPlaceOrder {
+	fmt.Println("Generate Market Orders: ", market, size)
 	var side string
 
 	if size > 0 {
@@ -150,7 +174,7 @@ func (s *Sub) generateMarketOrder(market string, size float64) *orders.RequestFo
 	} else if size < 0 {
 		side = "sell"
 	} else {
-		return nil
+		panic("size zero order creation")
 	}
 
 	return &orders.RequestForPlaceOrder{
@@ -158,7 +182,7 @@ func (s *Sub) generateMarketOrder(market string, size float64) *orders.RequestFo
 		Type:     "market",
 		Market:   market,
 		Side:     side,
-		Size:     size,
+		Size:     math.Abs(size),
 	}
 }
 
@@ -179,4 +203,88 @@ func (s *Sub) verifyClientID(clientID string) bool {
 	}
 
 	return true
+}
+
+// These functions mutate the state of Sub type
+// removeOrdersInLocalStateFromOrderIDs removes orders from s.client.activeOrders which got canceled by calibrator
+func (s *Sub) removeOrdersInLocalStateFromOrderIDs(orderIDs []int64) {
+	for i := range orderIDs {
+		for j := range s.client.activeOrders {
+			if orderIDs[i] == s.client.activeOrders[j].Id {
+				s.client.activeOrders = append(s.client.activeOrders[:j], s.client.activeOrders[j+1:]...)
+				break
+			}
+		}
+	}
+}
+
+func (s *Sub) changeLeverageInLocalState(isLeverageChangeRequired bool, newLeverage float64) {
+	if isLeverageChangeRequired {
+		s.client.leverage.Store(newLeverage)
+	}
+}
+
+func (s *Sub) updatePositionsInLocalStateFromMarketOrderRequests(marketOrders []*orders.RequestForPlaceOrder) {
+	for i := range marketOrders {
+		if marketOrders[i].Type != "market" {
+			continue
+		}
+
+		for j := range s.client.openPositions {
+			if s.client.openPositions[j].Market == marketOrders[i].Market {
+				if marketOrders[i].Side == "buy" {
+					s.client.openPositions[j].Size += math.Abs(marketOrders[i].Size)
+
+					tools.RoundFloatPointer(&s.client.openPositions[j].Size)
+					// remove positions if size is 0
+					if s.client.openPositions[j].Size == 0 {
+						s.client.openPositions[j] = s.client.openPositions[len(s.client.openPositions)-1]
+						s.client.openPositions = s.client.openPositions[:len(s.client.openPositions)-1]
+					}
+
+					s.client.addToFillsAdjuster(marketOrders[i].Market, math.Abs(marketOrders[i].Size))
+				} else {
+					s.client.openPositions[j].Size += -math.Abs(marketOrders[i].Size)
+
+					tools.RoundFloatPointer(&s.client.openPositions[j].Size)
+					// remove positions if size is 0
+					if s.client.openPositions[j].Size == 0 {
+						s.client.openPositions[j] = s.client.openPositions[len(s.client.openPositions)-1]
+						s.client.openPositions = s.client.openPositions[:len(s.client.openPositions)-1]
+					}
+
+					s.client.addToFillsAdjuster(marketOrders[i].Market, -math.Abs(marketOrders[i].Size))
+				}
+				break
+			}
+		}
+	}
+}
+
+func (s *Sub) updateOrdersInLocalStateFromOrderResponses(orderResponses []*orders.ResponseForPlaceOrder) {
+	for i := range orderResponses {
+		if orderResponses[i].Type != "limit" {
+			continue
+		}
+
+		newOrder := order{
+			Id:            int64(orderResponses[i].ID),
+			Market:        orderResponses[i].Market,
+			Type:          orderResponses[i].Type,
+			Side:          orderResponses[i].Side,
+			Price:         orderResponses[i].Price,
+			Size:          orderResponses[i].Size,
+			FilledSize:    orderResponses[i].FilledSize,
+			RemainingSize: orderResponses[i].RemainingSize,
+			AvgFillPrice:  0,
+			Status:        orderResponses[i].Status,
+			ReduceOnly:    orderResponses[i].ReduceOnly,
+			Ioc:           orderResponses[i].Ioc,
+			PostOnly:      orderResponses[i].PostOnly,
+		}
+
+		newOrder.ClientId.SetValue(orderResponses[i].ClientID)
+
+		s.client.activeOrders = append(s.client.activeOrders, &newOrder)
+	}
 }

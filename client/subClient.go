@@ -9,13 +9,19 @@ import (
 
 func NewSubClient(
 	apiKey, apiSecret string,
-	leverageUpdateDuration, balanceUpdateDuration int64,
+	leverageUpdateDuration, balanceUpdateDuration, calibrationDuration int64,
+	isCopyLeverage, isBalanceProportional bool,
+	fixedProportion float64,
 	subRoutineCloser chan int, wg *sync.WaitGroup,
 	host *Host) *Sub {
 
 	c := Sub{
 		client: newClient(apiKey, apiSecret, leverageUpdateDuration, balanceUpdateDuration, subRoutineCloser, wg), hostClient: host,
 	}
+	c.calibrationDuration = calibrationDuration
+	c.isCopyLeverage = isCopyLeverage
+	c.isBalanceProportional = isBalanceProportional
+	c.fixedProportion = fixedProportion
 	c.hostMessageUpdates = make(chan []byte, 100)
 	return &c
 }
@@ -33,12 +39,14 @@ type Sub struct {
 }
 
 func (s *Sub) Initialize() {
-	s.SetSymbolInformationFromHost()
+
+	//TODO: FILLS ADJUSTMENT
+	s.setSymbolInformationFromHost()
 	s.client.initialize()
 	s.hostClient.SubscribeToHostUpdates(s.hostMessageUpdates)
 }
 
-func (s *Sub) SetSymbolInformationFromHost() {
+func (s *Sub) setSymbolInformationFromHost() {
 	s.client.symbolInfoLock.Lock()
 	defer s.client.symbolInfoLock.Unlock()
 
@@ -46,8 +54,8 @@ func (s *Sub) SetSymbolInformationFromHost() {
 
 	s.client.symbolsInfo = make(map[string]symbolInfo, 1000)
 
-	for k, v := range symbolInformation {
-		s.client.symbolsInfo[k] = v
+	for k := range symbolInformation {
+		s.client.symbolsInfo[k] = symbolInformation[k]
 	}
 }
 

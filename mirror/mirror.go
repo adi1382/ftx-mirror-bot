@@ -1,8 +1,9 @@
 package mirror
 
 import (
-	"github.com/adi1382/ftx-mirror-bot/client"
 	"sync"
+
+	"github.com/adi1382/ftx-mirror-bot/client"
 )
 
 func NewMirrorInstance(wg *sync.WaitGroup, subRoutineCloser chan int) *Mirror {

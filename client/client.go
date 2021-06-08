@@ -1,9 +1,9 @@
 package client
 
 import (
-	"github.com/adi1382/ftx-mirror-bot/constants"
 	"sync"
 
+	"github.com/adi1382/ftx-mirror-bot/constants"
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/auth"
 	"github.com/adi1382/ftx-mirror-bot/go-ftx/rest"
 	"github.com/adi1382/ftx-mirror-bot/websocket"
@@ -51,6 +51,8 @@ type client struct {
 	openPositions                      []*position
 	activeOrdersLock                   sync.Mutex
 	openPositionsLock                  sync.Mutex //Applied till here
+	fillsAdjuster                      map[string]float64
+	fillsAdjusterLock                  sync.Mutex
 	leverageUpdateDuration             int64
 	balanceUpdateDuration              int64
 	lastAccountInformationCallTimeUnix int64
@@ -68,6 +70,7 @@ func (c *client) initialize() {
 
 	c.initializeAccountInfoAndPositions()
 	c.initializeOrders()
+	c.setFillsAdjuster()
 
 	c.wg.Add(1)
 	go c.receiveStreamingData()
