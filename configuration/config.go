@@ -13,7 +13,7 @@ type Settings struct {
 
 type HostAccount struct {
 	ApiKey string `json:"ApiKey"`
-	Secret string `json:"Secret"`
+	Secret string `json:"secret"`
 }
 
 type SubAccount struct {
@@ -22,5 +22,5 @@ type SubAccount struct {
 	FixedProportion   int    `json:"FixedProportion"`
 	CopyLeverage      bool   `json:"CopyLeverage"`
 	ApiKey            string `json:"ApiKey"`
-	Secret            string `json:"Secret"`
+	Secret            string `json:"secret"`
 }

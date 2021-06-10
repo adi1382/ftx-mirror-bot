@@ -1,9 +1,6 @@
 package rest
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"net/url"
 	"time"
@@ -27,12 +24,6 @@ func (p *Client) request(req Requester, results interface{}) error {
 		return err
 	}
 	return nil
-}
-
-func signature(secret, body string) string {
-	mac := hmac.New(sha256.New, []byte(secret))
-	mac.Write([]byte(body))
-	return hex.EncodeToString(mac.Sum(nil))
 }
 
 func (p *Client) newRequest(r Requester) *fasthttp.Request {
@@ -60,10 +51,8 @@ func (p *Client) newRequest(r Requester) *fasthttp.Request {
 		req.Header.Set("FTX-SIGN", p.Auth.Signature(payload))
 		req.Header.Set("FTX-TS", nonce)
 
-		// set id is there UseSubAccountID
-		subAccount := p.Auth.SubAccount()
-		if subAccount.Nickname != "" {
-			req.Header.Set("FTX-SUBACCOUNT", url.PathEscape(subAccount.Nickname))
+		if p.Auth.SubAccount.IsSubAccount {
+			req.Header.Set("FTX-SUBACCOUNT", url.PathEscape(p.Auth.SubAccount.Name))
 		}
 	}
 

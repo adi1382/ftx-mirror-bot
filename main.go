@@ -33,7 +33,7 @@ func main() {
 		"ASGrfAkDazesSlq5e98jZmmTCevGpyE6kg8hSZiE",
 		100,
 		100,
-		10,
+		100,
 		true,
 		false,
 		1,

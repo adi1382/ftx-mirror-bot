@@ -8,7 +8,9 @@
 
     "HostAccount": {
         "ApiKey": "",
-        "Secret": ""
+        "Secret": "",
+        "IsFTXSubAccount": false,
+        "FTXSubAccountName": ""
     },
 
     "SubAccounts": {
@@ -19,7 +21,9 @@
             "FixedProportion": 1,
             "CopyLeverage": true,
             "ApiKey": "",
-            "Secret": ""
+            "Secret": "",
+            "IsFTXSubAccount": false,
+            "FTXSubAccountName": ""
         },
 
         "Account 2": {
@@ -28,7 +32,9 @@
             "FixedProportion": 1,
             "CopyLeverage": true,
             "ApiKey": "",
-            "Secret": ""
+            "Secret": "",
+            "IsFTXSubAccount": false,
+            "FTXSubAccountName": ""
         }
     }
 
