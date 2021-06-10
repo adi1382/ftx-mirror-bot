@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"github.com/adi1382/ftx-mirror-bot/go-ftx/auth"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -9,14 +10,13 @@ import (
 type WSConnection struct {
 	Conn             *websocket.Conn
 	wsWriteLock      sync.Mutex
-	key              string
-	secret           string
+	config           *auth.Config
 	subRoutineCloser chan int
 	wg               *sync.WaitGroup
 }
 
-func NewSocketConnection(key, secret string, subRoutineCloser chan int, wg *sync.WaitGroup) *WSConnection {
-	ws := WSConnection{key: key, secret: secret, subRoutineCloser: subRoutineCloser, wg: wg}
+func NewSocketConnection(config *auth.Config, subRoutineCloser chan int, wg *sync.WaitGroup) *WSConnection {
+	ws := WSConnection{config: config, subRoutineCloser: subRoutineCloser, wg: wg}
 	return &ws
 }
 

@@ -77,9 +77,12 @@ func (c *client) handleOrderUpdateFromStream(newOrder *order) {
 	removalRequired := c.checkIfOrderNeedsToBeRemoved(newOrder)
 
 	if index := c.checkIfOrderAlreadyExists(newOrder); index > -1 {
+		c.sendExistingOrderUpdateToSubscriptions(*newOrder)
 		c.updateExistingOrder(newOrder, index, removalRequired)
 		return
 	}
+
+	c.sendNewOrderUpdateToSubscriptions(*newOrder)
 
 	if !removalRequired {
 		c.insertNewOrder(newOrder)

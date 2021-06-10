@@ -15,27 +15,26 @@ func newClient(
 	leverageUpdateDuration, balanceUpdateDuration int64,
 	subRoutineCloser chan int, wg *sync.WaitGroup) *client {
 
-	c := client{apiKey: apiKey}
-	c.rest = rest.New(auth.New(apiKey, secret))
+	c := client{}
+	c.config = auth.New(apiKey, secret)
+	c.rest = rest.New(c.config)
 	c.leverageUpdateDuration = leverageUpdateDuration
 	c.balanceUpdateDuration = balanceUpdateDuration
 	c.subRoutineCloser = subRoutineCloser
 	c.wg = wg
-	c.wsConnection = websocket.NewSocketConnection(apiKey, secret, c.subRoutineCloser, c.wg)
+	c.wsConnection = websocket.NewSocketConnection(c.config, c.subRoutineCloser, c.wg)
 	c.userStream = make(chan []byte, 100)
 	c.running.Store(true)
 	return &c
 }
 
 type client struct {
-	apiKey                             string
 	rest                               *rest.Client
+	config                             *auth.Config
 	symbolsInfo                        map[string]symbolInfo
 	symbolInfoLock                     sync.Mutex
 	wsConnection                       *websocket.WSConnection
 	userStream                         chan []byte
-	subscriptionsToUserStream          []chan []byte //is subscribed by subAccounts to hostAccounts
-	subscriptionsToUserStreamLock      sync.Mutex
 	isRestartRequired                  *atomic.Bool
 	leverage                           atomic.Float64
 	totalCollateral                    atomic.Float64
@@ -56,6 +55,11 @@ type client struct {
 	leverageUpdateDuration             int64
 	balanceUpdateDuration              int64
 	lastAccountInformationCallTimeUnix int64
+
+	subscriptionsToNewOrderUpdates      []chan *order //is subscribed by subAccounts to hostAccounts
+	subscriptionsToNewOrderUpdatesLock  sync.Mutex
+	subscriptionsToExistingOrderUpdates []chan *order //is subscribed by subAccounts to hostAccounts
+	subscriptionsToExistingUpdatesLock  sync.Mutex
 }
 
 func (c *client) initialize() {

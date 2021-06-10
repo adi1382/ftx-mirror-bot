@@ -13,7 +13,8 @@ func (c *client) receiveStreamingData() {
 	}()
 	for {
 		msg := <-c.userStream
-		c.sendMessageToSubscriptions(msg) //This is used only for host accounts
+		//TODO: REMOVE IT FROM HERE
+		//c.sendNewOrderUpdateToSubscriptions(msg) //This is used only for host accounts
 		if c.checkQuitStream(msg) {
 			return
 		}
@@ -30,16 +31,6 @@ func (c *client) receiveStreamingData() {
 		c.unhandledError(err)
 
 		c.handleWebSocketData(rawData, wsResponse.Channel)
-	}
-}
-
-func (c *client) sendMessageToSubscriptions(msg []byte) {
-	if len(c.subscriptionsToUserStream) > 0 {
-		c.subscriptionsToUserStreamLock.Lock()
-		for i := range c.subscriptionsToUserStream {
-			c.subscriptionsToUserStream[i] <- msg
-		}
-		c.subscriptionsToUserStreamLock.Unlock()
 	}
 }
 

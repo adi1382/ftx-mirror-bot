@@ -1,9 +1,6 @@
 package websocket
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"net/url"
 	"time"
@@ -63,12 +60,14 @@ func (ws *WSConnection) subscribeToPrivateChannels(channels []string) {
 func (ws *WSConnection) getAuthMessage() *wsAuthorizationMessage {
 	timestamp := time.Now().UTC().UnixNano() / int64(time.Millisecond)
 
-	sig := hmac.New(sha256.New, []byte(ws.secret))
-	sig.Write([]byte(fmt.Sprintf("%dwebsocket_login", timestamp)))
 	args := map[string]interface{}{
-		"key":  ws.key,
-		"sign": hex.EncodeToString(sig.Sum(nil)),
+		"key":  ws.config.Key,
+		"sign": ws.config.Signature(fmt.Sprintf("%dwebsocket_login", timestamp)),
 		"time": timestamp,
+	}
+
+	if ws.config.SubAccount.IsSubAccount {
+		args["subaccount"] = ws.config.SubAccount.Name
 	}
 
 	return &wsAuthorizationMessage{"login", args}

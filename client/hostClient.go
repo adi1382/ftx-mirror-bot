@@ -73,9 +73,3 @@ func (h *Host) SymbolInformation() map[string]symbolInfo {
 	}
 	return symbolInformation
 }
-
-func (h *Host) SubscribeToHostUpdates(ch chan []byte) {
-	h.client.subscriptionsToUserStreamLock.Lock()
-	h.client.subscriptionsToUserStream = append(h.client.subscriptionsToUserStream, ch)
-	h.client.subscriptionsToUserStreamLock.Unlock()
-}

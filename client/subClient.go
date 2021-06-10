@@ -22,20 +22,22 @@ func NewSubClient(
 	c.isCopyLeverage = isCopyLeverage
 	c.isBalanceProportional = isBalanceProportional
 	c.fixedProportion = fixedProportion
-	c.hostMessageUpdates = make(chan []byte, 100)
+	c.hostNewOrderUpdates = make(chan *order, 100)
+	c.hostExistingOrderUpdates = make(chan *order, 100)
 	return &c
 }
 
 type Sub struct {
-	client                *client
-	hostClient            *Host
-	hostMessageUpdates    chan []byte
-	subRoutineCloser      chan int
-	wg                    *sync.WaitGroup
-	calibrationDuration   int64
-	isCopyLeverage        bool
-	isBalanceProportional bool
-	fixedProportion       float64
+	client                   *client
+	hostClient               *Host
+	hostNewOrderUpdates      chan *order
+	hostExistingOrderUpdates chan *order
+	subRoutineCloser         chan int
+	wg                       *sync.WaitGroup
+	calibrationDuration      int64
+	isCopyLeverage           bool
+	isBalanceProportional    bool
+	fixedProportion          float64
 }
 
 func (s *Sub) Initialize() {
@@ -43,7 +45,8 @@ func (s *Sub) Initialize() {
 	//TODO: FILLS ADJUSTMENT
 	s.setSymbolInformationFromHost()
 	s.client.initialize()
-	s.hostClient.SubscribeToHostUpdates(s.hostMessageUpdates)
+	s.hostClient.SubscribeToHostNewOrderUpdates(s.hostNewOrderUpdates)
+	s.hostClient.SubscribeToHostExistingOrderUpdates(s.hostExistingOrderUpdates)
 }
 
 func (s *Sub) setSymbolInformationFromHost() {

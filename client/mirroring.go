@@ -1,11 +1,8 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
-
-	"github.com/adi1382/ftx-mirror-bot/websocket"
 )
 
 func (s *Sub) StartMirroring() {
@@ -16,25 +13,27 @@ func (s *Sub) StartMirroring() {
 
 	for {
 		select {
-		case hostSocketMessage := <-s.hostMessageUpdates:
-			if s.client.checkQuitStream(hostSocketMessage) {
-				return
-			}
-			fmt.Println("Mirrorring message")
-			s.processHostSocketUpdate(hostSocketMessage)
+		case hostNewOrderUpdate := <-s.hostNewOrderUpdates:
+			s.processNewOrderUpdate(hostNewOrderUpdate)
+		case hostCancelOrderUpdate := <-s.hostExistingOrderUpdates:
+			s.processExistingOrderUpdate(hostCancelOrderUpdate)
 		case <-calibrationTicker.C:
 			s.calibrate()
+		case <-s.subRoutineCloser:
+			s.subRoutineCloser <- 1
+			return
 		}
 	}
 }
 
-func (s *Sub) processHostSocketUpdate(hostSocketMessage []byte) {
-	wsResponse := new(websocket.Response)
-	err := json.Unmarshal(hostSocketMessage, wsResponse)
-	s.client.unhandledError(err)
+func (s *Sub) processNewOrderUpdate(hostNewOrderUpdate *order) {
+	fmt.Println("$$$$$$$$$$$ NEW ORDER")
+	fmt.Println(*hostNewOrderUpdate)
+	fmt.Println("$$$$$$$$$$$ NEW ORDER")
+}
 
-	if wsResponse.Channel != "order" {
-		return
-	}
-
+func (s *Sub) processExistingOrderUpdate(hostExistingOrderUpdate *order) {
+	fmt.Println("$$$$$$$$$$$ Existing ORDER")
+	fmt.Println(*hostExistingOrderUpdate)
+	fmt.Println("$$$$$$$$$$$ Existing ORDER")
 }
