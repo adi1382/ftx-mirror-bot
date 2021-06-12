@@ -1,8 +1,9 @@
 package websocket
 
 import (
-	"github.com/adi1382/ftx-mirror-bot/go-ftx/auth"
 	"sync"
+
+	"github.com/adi1382/ftx-mirror-bot/go-ftx/auth"
 
 	"github.com/gorilla/websocket"
 )

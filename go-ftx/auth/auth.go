@@ -17,15 +17,17 @@ type FTXSubAccount struct {
 	Name         string
 }
 
-func New(key, secret string, subAccountName ...string) *Config {
+func New(key, secret string, isFTXSubAccount bool, FTXSubAccountName string) *Config {
 	config := &Config{
 		Key:    key,
 		secret: secret,
 	}
 
-	if len(subAccountName) > 0 {
-		config.SubAccount.IsSubAccount = true
-		config.SubAccount.Name = subAccountName[0]
+	if isFTXSubAccount {
+		if FTXSubAccountName != "" {
+			config.SubAccount.IsSubAccount = true
+			config.SubAccount.Name = FTXSubAccountName
+		}
 	}
 
 	return config

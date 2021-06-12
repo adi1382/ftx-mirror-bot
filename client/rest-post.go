@@ -12,6 +12,13 @@ func (c *client) postCancelOrderByID(orderId int) {
 	c.restError(err)
 }
 
+func (c *client) postCancelOrderByClOrdID(ClOrdID string) {
+	_, err := c.rest.CancelByID(&orders.RequestForCancelByID{
+		ClientID: ClOrdID,
+	})
+	c.restError(err)
+}
+
 func (c *client) postPlaceOrder(order *orders.RequestForPlaceOrder) *orders.ResponseForPlaceOrder {
 	resp, err := c.rest.PlaceOrder(order)
 	c.restError(err)

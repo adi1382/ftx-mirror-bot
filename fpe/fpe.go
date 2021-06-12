@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"log"
 	"math/big"
+	"strconv"
 	"strings"
 
 	"github.com/adi1382/ftx-mirror-bot/constants"
@@ -37,12 +38,12 @@ func GenerateRandomClOrdID() string {
 	}
 	nBig.Abs(nBig)
 	nBig.Add(nBig, big.NewInt(10000000000))
-	return GenerateClOrdIDFromOrdID(nBig.String())
+	return GenerateClOrdIDFromOrdID(nBig.Int64())
 }
 
-func GenerateClOrdIDFromOrdID(orderID string) string {
+func GenerateClOrdIDFromOrdID(orderID int64) string {
 	// Call the encryption function on an example SSN
-	clOrderID, err := ff3.Encrypt(orderID)
+	clOrderID, err := ff3.Encrypt(strconv.Itoa(int(orderID)))
 	if err != nil {
 		panic(err)
 	}
@@ -50,14 +51,18 @@ func GenerateClOrdIDFromOrdID(orderID string) string {
 	return clOrderID
 }
 
-func GenerateOrdIDFromClOrdID(clOrderID string) string {
+func GenerateOrdIDFromClOrdID(clOrderID string) int64 {
 	clOrderID = strings.TrimPrefix(clOrderID, constants.ClientOrderIDPrefix)
 	clOrderID = clOrderID[:len(clOrderID)-constants.ClientOrderIDSuffixLength]
 	orderID, err := ff3.Decrypt(clOrderID)
 	if err != nil {
 		panic(err)
 	}
-	return orderID
+	ordID, err := strconv.Atoi(orderID)
+	if err != nil {
+		panic(err)
+	}
+	return int64(ordID)
 }
 
 func randomString(len int) string {

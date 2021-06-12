@@ -1,6 +1,8 @@
 package client
 
 import (
+	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/adi1382/ftx-mirror-bot/constants"
@@ -12,11 +14,12 @@ import (
 
 func newClient(
 	apiKey, secret string,
+	isFTXSubAccount bool, FTXSubAccountName string,
 	leverageUpdateDuration, balanceUpdateDuration int64,
 	subRoutineCloser chan int, wg *sync.WaitGroup) *client {
 
 	c := client{}
-	c.config = auth.New(apiKey, secret)
+	c.config = auth.New(apiKey, secret, isFTXSubAccount, FTXSubAccountName)
 	c.rest = rest.New(c.config)
 	c.leverageUpdateDuration = leverageUpdateDuration
 	c.balanceUpdateDuration = balanceUpdateDuration
@@ -89,17 +92,21 @@ func (c *client) restart() {
 	c.running.Store(false)
 }
 
-//func (c *client) checkForRestart() {
-//
-//	for {
-//		time.Sleep(time.Millisecond)
-//		if c.isRestartRequired.Load() {
-//			c.restart()
-//			return
-//		}
-//
-//		if !c.runningStatus() {
-//			return
-//		}
-//	}
-//}
+//verifyClientID verifies if the clientID is placed by mirror bot or not
+func (s *Sub) verifyClientID(clientID string) bool {
+	if !strings.HasPrefix(clientID, constants.ClientOrderIDPrefix) {
+		return false
+	}
+
+	clID := strings.TrimPrefix(clientID, constants.ClientOrderIDPrefix)
+	if len(clientID) < 2+constants.ClientOrderIDSuffixLength {
+		return false
+	}
+
+	clID = clID[:len(clID)-constants.ClientOrderIDSuffixLength]
+	if _, err := strconv.Atoi(clID); err != nil {
+		return false
+	}
+
+	return true
+}

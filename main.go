@@ -2,11 +2,16 @@ package main
 
 import (
 	"fmt"
+	"runtime"
 	"sync"
+	"time"
 
 	"github.com/adi1382/ftx-mirror-bot/client"
 )
 
+//TODO: check all combinations of orders
+//TODO: reduce only orders -> check open position size first.
+//TODO: market orders in IOC
 var (
 	subRoutineCloser chan int
 	wg               sync.WaitGroup
@@ -23,14 +28,18 @@ func init() {
 }
 
 func main() {
-	hostClient := client.NewHostClient("kqAyKxRHgQreYe4iNLB7qnpSp1zQsjQP2ePFUDjq",
-		"PhqPf5qpoCp7aFjYC4Ua5ZJTAHuBP20P0TwyZvOX",
+	hostClient := client.NewHostClient("WVCqrFnrMTLZGGjYyGzdPAfHG1Qkt77JTSICZWbt",
+		"P6XCnfCzbGLPAUzZHcfpzPfWTq5fWG6RIw7iUFaB",
+		true,
+		"hot",
 		10,
 		10,
 		subRoutineCloser, &wg)
 
-	subClient := client.NewSubClient("pVK2kZAxr4xKf1wPGxx0FYtRP87CuPH6JZcQmyqP",
-		"ASGrfAkDazesSlq5e98jZmmTCevGpyE6kg8hSZiE",
+	subClient := client.NewSubClient("11lrUVROrPsQGyd8C-MHiK8d86KKW-sNNtICvwmw",
+		"jcFPpkpKhM5RRCk6ufcUHmbLLitPwQ4js00xvwz-",
+		true,
+		"cold",
 		100,
 		100,
 		100,
@@ -43,7 +52,9 @@ func main() {
 	hostClient.Initialize()
 	subClient.Initialize()
 
-	subClient.StartMirroring()
+	go subClient.StartMirroring()
+	//time.Sleep(time.Second)
+	//fmt.Println(runtime.NumGoroutine())
 
 	//go func() {
 	//	for {
@@ -52,15 +63,19 @@ func main() {
 	//		time.Sleep(time.Second)
 	//	}
 	//}()
-
+	//
 	//go func() {
-	//	time.Sleep(time.Minute)
+	//	time.Sleep(time.Second*10)
 	//	fmt.Println("Attemptingggg")
 	//	subRoutineCloser <- 0
 	//}()
 
 	wg.Wait()
 	fmt.Println("wait group completed")
+
+	fmt.Println(runtime.NumGoroutine())
+	time.Sleep(time.Second * 60)
+	fmt.Println(runtime.NumGoroutine())
 
 	//n := 0
 

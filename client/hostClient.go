@@ -1,16 +1,16 @@
 package client
 
 import (
-	"strconv"
 	"sync"
 )
 
 func NewHostClient(
 	apiKey, apiSecret string,
+	isFTXSubAccount bool, FTXSubAccountName string,
 	leverageUpdateDuration, balanceUpdateDuration int64,
 	subRoutineCloser chan int, wg *sync.WaitGroup) *Host {
 	c := Host{
-		client: newClient(apiKey, apiSecret, leverageUpdateDuration, balanceUpdateDuration, subRoutineCloser, wg),
+		client: newClient(apiKey, apiSecret, isFTXSubAccount, FTXSubAccountName, leverageUpdateDuration, balanceUpdateDuration, subRoutineCloser, wg),
 	}
 	return &c
 }
@@ -24,13 +24,13 @@ func (h *Host) Initialize() {
 	h.client.initialize()
 }
 
-func (h *Host) ActiveOrders() map[string]order {
+func (h *Host) ActiveOrders() map[int64]order {
 	h.client.activeOrdersLock.Lock()
 	defer h.client.activeOrdersLock.Unlock()
 
-	openOrders := make(map[string]order, 5)
+	openOrders := make(map[int64]order, 5)
 	for i := range h.client.activeOrders {
-		openOrders[strconv.Itoa(int(h.client.activeOrders[i].Id))] = *h.client.activeOrders[i]
+		openOrders[h.client.activeOrders[i].Id] = *h.client.activeOrders[i]
 	}
 	return openOrders
 }

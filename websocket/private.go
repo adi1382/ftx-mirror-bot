@@ -107,17 +107,3 @@ func (ws *WSConnection) pingPong() {
 func (ws *WSConnection) websocketError(err error) {
 	fmt.Println(err)
 }
-
-//func (ws *WSConnection) closeOnRestart() {
-//	for {
-//		if ws.isRestartRequired.Load() {
-//			err := ws.Conn.Close()
-//
-//			if err != nil {
-//				return
-//			}
-//		}
-//
-//		time.Sleep(time.Millisecond)
-//	}
-//}

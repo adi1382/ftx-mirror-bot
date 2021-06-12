@@ -1,14 +1,15 @@
 package client
 
 import (
-	"fmt"
 	"math"
-	"strconv"
 	"sync"
+
+	"github.com/adi1382/ftx-mirror-bot/tools"
 )
 
 func NewSubClient(
 	apiKey, apiSecret string,
+	isFTXSubAccount bool, FTXSubAccountName string,
 	leverageUpdateDuration, balanceUpdateDuration, calibrationDuration int64,
 	isCopyLeverage, isBalanceProportional bool,
 	fixedProportion float64,
@@ -16,7 +17,7 @@ func NewSubClient(
 	host *Host) *Sub {
 
 	c := Sub{
-		client: newClient(apiKey, apiSecret, leverageUpdateDuration, balanceUpdateDuration, subRoutineCloser, wg), hostClient: host,
+		client: newClient(apiKey, apiSecret, isFTXSubAccount, FTXSubAccountName, leverageUpdateDuration, balanceUpdateDuration, subRoutineCloser, wg), hostClient: host,
 	}
 	c.calibrationDuration = calibrationDuration
 	c.isCopyLeverage = isCopyLeverage
@@ -78,9 +79,6 @@ func (s *Sub) roundSize(adjustedSize float64, symbol string) float64 {
 	defer s.client.symbolInfoLock.Unlock()
 
 	rounded := math.Round(adjustedSize/s.client.symbolsInfo[symbol].SizeIncrement) * s.client.symbolsInfo[symbol].SizeIncrement
-	formatted, err := strconv.ParseFloat(fmt.Sprintf("%.10f", rounded), 64)
-	if err != nil {
-		return rounded
-	}
-	return formatted
+	tools.RoundFloatPointer(&rounded)
+	return rounded
 }
