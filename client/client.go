@@ -1,8 +1,6 @@
 package client
 
 import (
-	"strconv"
-	"strings"
 	"sync"
 
 	"github.com/adi1382/ftx-mirror-bot/constants"
@@ -16,9 +14,11 @@ func newClient(
 	apiKey, secret string,
 	isFTXSubAccount bool, FTXSubAccountName string,
 	leverageUpdateDuration, balanceUpdateDuration int64,
-	subRoutineCloser chan int, wg *sync.WaitGroup) *client {
+	subRoutineCloser chan int, wg *sync.WaitGroup, isHost bool) *client {
 
 	c := client{}
+	c.isHost = isHost
+	c.api = apiKey
 	c.config = auth.New(apiKey, secret, isFTXSubAccount, FTXSubAccountName)
 	c.rest = rest.New(c.config)
 	c.leverageUpdateDuration = leverageUpdateDuration
@@ -32,6 +32,8 @@ func newClient(
 }
 
 type client struct {
+	isHost                             bool
+	api                                string
 	rest                               *rest.Client
 	config                             *auth.Config
 	symbolsInfo                        map[string]symbolInfo
@@ -70,8 +72,9 @@ func (c *client) initialize() {
 
 	c.wsConnection.AuthenticateWebsocketConnection()
 	c.wsConnection.SubscribeToPrivateStreams()
-	c.checkIfStreamsAreSuccessfullySubscribed([]string{"fills", "orders"}, constants.TimeoutToCheckForSubscriptions)
-	if !c.runningStatus() {
+	if err := c.checkIfStreamsAreSuccessfullySubscribed(
+		[]string{"fills", "orders"}, constants.TimeoutToCheckForSubscriptions); err != nil {
+		c.restart()
 		return
 	}
 
@@ -90,23 +93,4 @@ func (c *client) runningStatus() bool {
 func (c *client) restart() {
 	c.subRoutineCloser <- 0
 	c.running.Store(false)
-}
-
-//verifyClientID verifies if the clientID is placed by mirror bot or not
-func (s *Sub) verifyClientID(clientID string) bool {
-	if !strings.HasPrefix(clientID, constants.ClientOrderIDPrefix) {
-		return false
-	}
-
-	clID := strings.TrimPrefix(clientID, constants.ClientOrderIDPrefix)
-	if len(clientID) < 2+constants.ClientOrderIDSuffixLength {
-		return false
-	}
-
-	clID = clID[:len(clID)-constants.ClientOrderIDSuffixLength]
-	if _, err := strconv.Atoi(clID); err != nil {
-		return false
-	}
-
-	return true
 }

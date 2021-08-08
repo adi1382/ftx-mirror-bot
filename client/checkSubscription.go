@@ -1,3 +1,5 @@
+//These functions verify if a channel is subscribed on the websocket connection
+
 package client
 
 import (
@@ -8,8 +10,8 @@ import (
 	"github.com/adi1382/ftx-mirror-bot/websocket"
 )
 
-func (c *client) pushChannelToTheTopOfUserStream(tempChannel chan []byte) {
-	c.dumpUserStreamToChannel(tempChannel)
+func (c *client) pushChannelToTheTopOfUserStream(tempChannel chan []byte) error {
+	c.flushUserStreamToChannel(tempChannel)
 
 	n := len(tempChannel)
 
@@ -18,12 +20,13 @@ func (c *client) pushChannelToTheTopOfUserStream(tempChannel chan []byte) {
 	}
 
 	if len(c.userStream) != n {
-		c.restart()
-		return
+		return fmt.Errorf("new message got into userstream while flushing tempChannel")
 	}
+
+	return nil
 }
 
-func (c *client) dumpUserStreamToChannel(tempChannel chan []byte) {
+func (c *client) flushUserStreamToChannel(tempChannel chan []byte) {
 	for len(c.userStream) > 0 {
 		tempChannel <- <-c.userStream
 	}
@@ -43,7 +46,8 @@ func (c *client) fetchMessagesFromChannel(tempChannel chan []byte) [][]byte {
 	return byteMessages
 }
 
-func (c *client) fetchMessagesFromUserStreamWithoutModifyingUserStream(minChannelLength int, timeout time.Duration) [][]byte {
+func (c *client) fetchMessagesFromUserStreamWithoutModifyingUserStream(
+	minChannelLength int, timeout time.Duration) ([][]byte, error) {
 	tempChannel := make(chan []byte, 100)
 	timer := time.NewTimer(timeout)
 	defer timer.Stop()
@@ -59,20 +63,20 @@ L:
 				break L
 			}
 		case <-timer.C:
-			fmt.Printf("Didn't received %d message(s) in 15 seconds. Trying to restart...\n", minChannelLength)
-			c.restart()
-			return nil
+			return nil, fmt.Errorf("didn't received %d message(s) in timeout", minChannelLength)
 		}
 	}
 
-	c.dumpUserStreamToChannel(tempChannel)
+	c.flushUserStreamToChannel(tempChannel)
 	messages := c.fetchMessagesFromChannel(tempChannel)
-	c.pushChannelToTheTopOfUserStream(tempChannel)
+	if err := c.pushChannelToTheTopOfUserStream(tempChannel); err != nil {
+		return nil, err
+	}
 
-	return messages
+	return messages, nil
 }
 
-func (c *client) fetchSubscribedChannels(messages [][]byte) []string {
+func (c *client) subscribedChannels(messages [][]byte) []string {
 	wsMessage := new(websocket.Response)
 	subscribed := make([]string, 0, 2)
 
@@ -87,37 +91,46 @@ func (c *client) fetchSubscribedChannels(messages [][]byte) []string {
 	return subscribed
 }
 
-func (c *client) checkIfStreamsAreSuccessfullySubscribed(channelsToSubscribe []string, timeout time.Duration) {
+func (c *client) fetchSubscribedChannels(minChannelLength int, timeout time.Duration) ([]string, error) {
+	if messages, err := c.fetchMessagesFromUserStreamWithoutModifyingUserStream(minChannelLength, timeout); err != nil {
+		return nil, err
+	} else {
+		return c.subscribedChannels(messages), nil
+	}
+}
+
+func (c *client) numberOfMatchingChannels(channelsToSubscribe, subscribedChannels []string) int {
+	var noOfChannelsSubscribed int
+	for i := range channelsToSubscribe {
+		for j := range subscribedChannels {
+			if channelsToSubscribe[i] == subscribedChannels[j] {
+				noOfChannelsSubscribed++
+			}
+		}
+	}
+	return noOfChannelsSubscribed
+}
+
+func (c *client) checkIfStreamsAreSuccessfullySubscribed(channelsToSubscribe []string, timeout time.Duration) error {
 	noOfChannelsToCheck := len(channelsToSubscribe)
-	noOfChannelsSubscribed := 0
 	startTime := time.Now().Unix()
 
 	for {
-		byteMessages := c.fetchMessagesFromUserStreamWithoutModifyingUserStream(noOfChannelsToCheck, timeout)
-		if byteMessages == nil {
-			return
-		}
 
-		subscribedChannels := c.fetchSubscribedChannels(byteMessages)
-
-		for i := range channelsToSubscribe {
-			for j := range subscribedChannels {
-				if channelsToSubscribe[i] == subscribedChannels[j] {
-					noOfChannelsSubscribed++
-				}
-			}
+		subscribedChannels, err := c.fetchSubscribedChannels(noOfChannelsToCheck, timeout)
+		if err != nil {
+			return err
 		}
+		noOfChannelsSubscribed := c.numberOfMatchingChannels(channelsToSubscribe, subscribedChannels)
 
 		if noOfChannelsSubscribed == noOfChannelsToCheck {
-			return
+			return nil
 		} else {
 			noOfChannelsSubscribed = 0
 		}
 
 		if time.Now().Unix()-startTime > int64(timeout/time.Second) {
-			fmt.Printf("Unable to verify subscriptions for channels %v\n", channelsToSubscribe)
-			c.restart()
-			return
+			return fmt.Errorf("Unable to verify subscriptions for channels %v\n", channelsToSubscribe)
 		}
 		time.Sleep(time.Millisecond)
 	}

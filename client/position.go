@@ -36,7 +36,24 @@ func (c *client) initializeAccountInfoAndPositions() {
 	}
 
 	c.leverage.Store(accountInformation.Leverage)
-	c.totalCollateral.Store(accountInformation.Collateral)
+
+	var totalCollateral float64
+	var usedCollateral float64
+
+	totalCollateral = accountInformation.Collateral
+	for i := range accountInformation.Positions {
+		usedCollateral += accountInformation.Positions[i].CollateralUsed
+	}
+
+	if c.isHost {
+		if totalCollateral > usedCollateral {
+			c.totalCollateral.Store(totalCollateral)
+		} else {
+			c.totalCollateral.Store(usedCollateral)
+		}
+	} else {
+		c.totalCollateral.Store(totalCollateral)
+	}
 
 	for i := range accountInformation.Positions {
 		if accountInformation.Positions[i].NetSize == 0 {

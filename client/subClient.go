@@ -17,7 +17,7 @@ func NewSubClient(
 	host *Host) *Sub {
 
 	c := Sub{
-		client: newClient(apiKey, apiSecret, isFTXSubAccount, FTXSubAccountName, leverageUpdateDuration, balanceUpdateDuration, subRoutineCloser, wg), hostClient: host,
+		client: newClient(apiKey, apiSecret, isFTXSubAccount, FTXSubAccountName, leverageUpdateDuration, balanceUpdateDuration, subRoutineCloser, wg, false), hostClient: host,
 	}
 	c.calibrationDuration = calibrationDuration
 	c.isCopyLeverage = isCopyLeverage

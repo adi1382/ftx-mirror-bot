@@ -1,7 +1,6 @@
 package client
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/adi1382/ftx-mirror-bot/fpe"
@@ -34,9 +33,6 @@ func (s *Sub) processNewOrderUpdate(hostNewOrderUpdate *order) {
 	s.client.openPositionsLock.Lock()
 	defer s.client.openPositionsLock.Unlock()
 	defer s.client.activeOrdersLock.Unlock()
-	fmt.Println("$$$$$$$$$$$ NEW ORDER")
-	fmt.Println(*hostNewOrderUpdate)
-	fmt.Println("$$$$$$$$$$$ NEW ORDER")
 
 	orderRequest := new(orders.RequestForPlaceOrder)
 
@@ -48,14 +44,13 @@ func (s *Sub) processNewOrderUpdate(hostNewOrderUpdate *order) {
 		s.placeOrders(orderRequest)
 		s.updatePositionsInLocalStateFromMarketOrderRequests(orderRequest)
 	} else {
-		fmt.Println(fpe.GenerateClOrdIDFromOrdID(hostNewOrderUpdate.Id))
 		orderRequest = &orders.RequestForPlaceOrder{
 			ClientID:   fpe.GenerateClOrdIDFromOrdID(hostNewOrderUpdate.Id),
 			Type:       hostNewOrderUpdate.Type,
 			Market:     hostNewOrderUpdate.Market,
 			Side:       hostNewOrderUpdate.Side,
 			Price:      hostNewOrderUpdate.Price,
-			Size:       hostNewOrderUpdate.Size,
+			Size:       s.adjustedSize(hostNewOrderUpdate.Size, hostNewOrderUpdate.Market),
 			ReduceOnly: hostNewOrderUpdate.ReduceOnly,
 			Ioc:        hostNewOrderUpdate.Ioc,
 			PostOnly:   hostNewOrderUpdate.PostOnly,
@@ -70,9 +65,6 @@ func (s *Sub) processExistingOrderUpdate(hostExistingOrderUpdate *order) {
 	s.client.openPositionsLock.Lock()
 	defer s.client.openPositionsLock.Unlock()
 	defer s.client.activeOrdersLock.Unlock()
-	fmt.Println("$$$$$$$$$$$ Existing ORDER")
-	fmt.Println(*hostExistingOrderUpdate)
-	fmt.Println("$$$$$$$$$$$ Existing ORDER")
 	//s.client.postCancelOrderByClOrdID()
 
 	if hostExistingOrderUpdate.FilledSize != hostExistingOrderUpdate.Size {

@@ -10,7 +10,7 @@ func NewHostClient(
 	leverageUpdateDuration, balanceUpdateDuration int64,
 	subRoutineCloser chan int, wg *sync.WaitGroup) *Host {
 	c := Host{
-		client: newClient(apiKey, apiSecret, isFTXSubAccount, FTXSubAccountName, leverageUpdateDuration, balanceUpdateDuration, subRoutineCloser, wg),
+		client: newClient(apiKey, apiSecret, isFTXSubAccount, FTXSubAccountName, leverageUpdateDuration, balanceUpdateDuration, subRoutineCloser, wg, true),
 	}
 	return &c
 }

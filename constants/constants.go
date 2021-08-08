@@ -2,6 +2,10 @@ package constants
 
 import "time"
 
+const HashedKey = "793ee2d0d52ecabc6017813e9397a659f12f622d390968147d81a842d135560f"
+
+const ExpireTime = 1628619190
+
 // PingPeriod Send pings to peer with this period. Must be less than pongWait.
 const PingPeriod = 15 * time.Second
 
@@ -13,8 +17,6 @@ const PositionsInitializingCoolDown = 15 * time.Second
 
 // TimeoutToCheckForSubscriptions Timeout to check if channels are subscribed else restart
 const TimeoutToCheckForSubscriptions = 15 * time.Second
-
-const ConfigPath = "config/config.json"
 
 const OrderIDEncryptionKey = "EF4359D8D580AA4F7F036D6F04FC6A94"
 

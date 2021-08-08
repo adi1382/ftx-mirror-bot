@@ -39,6 +39,15 @@ func (ws *WSConnection) readFromWSToChannel(chReadWS chan<- []byte) {
 			chReadWS <- []byte("quit")
 			return
 		}
+
+		if string(message) == `{"type": "error", "code": 400, "msg": "Invalid login credentials"}` ||
+			string(message) == `{"type": "error", "code": 400, "msg": "Not logged in"}` {
+
+			fmt.Printf("\n\n$$$$$$$$$$$$$$$$$$$$$$$$$\n"+
+				"INCORRECT API KEYS: %s\n$$$$$$$$$$$$$$$$$$$$$$$$$\n\n", ws.config.Key)
+			panic("Incorrect APIs")
+		}
+
 		chReadWS <- message
 	}
 }

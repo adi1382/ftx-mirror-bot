@@ -1,5 +1,7 @@
 package configuration
 
+const ConfigPath = "config/config.json"
+
 type Config struct {
 	Settings    Settings              `json:"Settings"`
 	HostAccount HostAccount           `json:"HostAccount"`
@@ -7,20 +9,25 @@ type Config struct {
 }
 
 type Settings struct {
-	RatioUpdateRate int `json:"RatioUpdateRate"`
-	CalibrationRate int `json:"CalibrationRate"`
+	LeverageUpdateDuration   int64 `json:"LeverageUpdateDuration"`
+	CollateralUpdateDuration int64 `json:"CollateralUpdateDuration"`
+	CalibrationRate          int64 `json:"CalibrationRate"`
 }
 
 type HostAccount struct {
-	ApiKey string `json:"ApiKey"`
-	Secret string `json:"secret"`
+	ApiKey            string `json:"ApiKey"`
+	Secret            string `json:"secret"`
+	IsFTXSubAccount   bool   `json:"IsFTXSubAccount"`
+	FTXSubAccountName string `json:"FTXSubAccountName"`
 }
 
 type SubAccount struct {
-	Enabled           bool   `json:"Enabled"`
-	BalanceProportion bool   `json:"BalanceProportion"`
-	FixedProportion   int    `json:"FixedProportion"`
-	CopyLeverage      bool   `json:"CopyLeverage"`
-	ApiKey            string `json:"ApiKey"`
-	Secret            string `json:"secret"`
+	Enabled           bool    `json:"Enabled"`
+	BalanceProportion bool    `json:"BalanceProportion"`
+	FixedProportion   float64 `json:"FixedProportion"`
+	CopyLeverage      bool    `json:"CopyLeverage"`
+	ApiKey            string  `json:"ApiKey"`
+	Secret            string  `json:"secret"`
+	IsFTXSubAccount   bool    `json:"IsFTXSubAccount"`
+	FTXSubAccountName string  `json:"FTXSubAccountName"`
 }

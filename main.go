@@ -2,7 +2,10 @@ package main
 
 import (
 	"fmt"
-	"runtime"
+	"github.com/adi1382/ftx-mirror-bot/configuration"
+	"github.com/adi1382/ftx-mirror-bot/constants"
+	"github.com/adi1382/ftx-mirror-bot/mirror"
+	"github.com/adi1382/ftx-mirror-bot/tools"
 	"sync"
 	"time"
 
@@ -17,65 +20,67 @@ var (
 	wg               sync.WaitGroup
 )
 
-var (
-	copyLeverage        = true
-	balanceProportional = true
-	fixedProportional   = 1
-)
-
 func init() {
 	subRoutineCloser = make(chan int, 100)
+
+	if !tools.CheckLicense() {
+		fmt.Println("License Invalid")
+		time.Sleep(time.Second * 10)
+		panic("License invalid")
+	}
+
+	fmt.Println(time.Now().Add(30 * 24 * time.Hour).Unix())
+
+	fmt.Printf("Time left to expiration: %d days.\n", ((constants.ExpireTime-time.Now().Unix())/3600)/24)
+
+	tools.CheckIfLicenseExpired()
+	go tools.ExitIfLicenseExpired()
 }
 
 func main() {
-	hostClient := client.NewHostClient("WVCqrFnrMTLZGGjYyGzdPAfHG1Qkt77JTSICZWbt",
-		"P6XCnfCzbGLPAUzZHcfpzPfWTq5fWG6RIw7iUFaB",
-		true,
-		"hot",
-		10,
-		10,
-		subRoutineCloser, &wg)
 
-	subClient := client.NewSubClient("11lrUVROrPsQGyd8C-MHiK8d86KKW-sNNtICvwmw",
-		"jcFPpkpKhM5RRCk6ufcUHmbLLitPwQ4js00xvwz-",
-		true,
-		"cold",
-		100,
-		100,
-		100,
-		true,
-		false,
-		1,
-		subRoutineCloser, &wg,
-		hostClient)
+	for {
+		config := configuration.ReadConfig()
 
-	hostClient.Initialize()
-	subClient.Initialize()
+		hostClient := client.NewHostClient(config.HostAccount.ApiKey,
+			config.HostAccount.Secret,
+			config.HostAccount.IsFTXSubAccount,
+			config.HostAccount.FTXSubAccountName,
+			config.Settings.LeverageUpdateDuration,
+			config.Settings.CollateralUpdateDuration,
+			subRoutineCloser, &wg)
 
-	go subClient.StartMirroring()
-	//time.Sleep(time.Second)
-	//fmt.Println(runtime.NumGoroutine())
+		newMirror := mirror.NewMirrorInstance(subRoutineCloser, &wg)
 
-	//go func() {
-	//	for {
-	//		fmt.Println(hostClient.ActiveOrders())
-	//		fmt.Println(hostClient.OpenPositions())
-	//		time.Sleep(time.Second)
-	//	}
-	//}()
-	//
-	//go func() {
-	//	time.Sleep(time.Second*10)
-	//	fmt.Println("Attemptingggg")
-	//	subRoutineCloser <- 0
-	//}()
+		newMirror.SetHostClient(hostClient)
 
-	wg.Wait()
-	fmt.Println("wait group completed")
+		for i := range config.SubAccounts {
+			if config.SubAccounts[i].Enabled {
+				newMirror.AddSubClient(client.NewSubClient(
+					config.SubAccounts[i].ApiKey,
+					config.SubAccounts[i].Secret,
+					config.SubAccounts[i].IsFTXSubAccount,
+					config.SubAccounts[i].FTXSubAccountName,
+					config.Settings.LeverageUpdateDuration,
+					config.Settings.CollateralUpdateDuration,
+					config.Settings.CalibrationRate,
+					config.SubAccounts[i].CopyLeverage,
+					config.SubAccounts[i].BalanceProportion,
+					config.SubAccounts[i].FixedProportion,
+					subRoutineCloser, &wg,
+					hostClient))
+			}
+		}
 
-	fmt.Println(runtime.NumGoroutine())
-	time.Sleep(time.Second * 60)
-	fmt.Println(runtime.NumGoroutine())
+		newMirror.Initialize()
+		newMirror.StartMirroring()
+
+		wg.Wait()
+		fmt.Println("wait group completed")
+
+		time.Sleep(time.Second * 5)
+		fmt.Println("Restarting")
+	}
 
 	//n := 0
 
@@ -94,8 +99,6 @@ func main() {
 	//}()
 
 	//fmt.Println("$$$$$$$444")
-
-	select {}
 }
 
 //func main() {

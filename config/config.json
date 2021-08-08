@@ -7,10 +7,10 @@
     },
 
     "HostAccount": {
-        "ApiKey": "",
-        "Secret": "",
-        "IsFTXSubAccount": false,
-        "FTXSubAccountName": ""
+        "ApiKey": "xrYjNa2Xp9Z7extecZ39KwxL8SKnDWMH2PUaZtTD",
+        "Secret": "30SmUH0pB8vn6UKUZ8KK06iqM7_ZggKUuaIeL8_K",
+        "IsFTXSubAccount": true,
+        "FTXSubAccountName": "ETH"
     },
 
     "SubAccounts": {
@@ -20,21 +20,10 @@
             "BalanceProportion": true,
             "FixedProportion": 1,
             "CopyLeverage": true,
-            "ApiKey": "",
-            "Secret": "",
-            "IsFTXSubAccount": false,
-            "FTXSubAccountName": ""
-        },
-
-        "Account 2": {
-            "Enabled": false,
-            "BalanceProportion": true,
-            "FixedProportion": 1,
-            "CopyLeverage": true,
-            "ApiKey": "",
-            "Secret": "",
-            "IsFTXSubAccount": false,
-            "FTXSubAccountName": ""
+            "ApiKey": "nDDb8MUEde2Zryf55ZT7l21XZyIbOso3sCqDSREC",
+            "Secret": "pECBilTwpRLqpRZdamXvmny5sEHBCWcKOYq9qGh3",
+            "IsFTXSubAccount": true,
+            "FTXSubAccountName": "etht"
         }
     }
 
